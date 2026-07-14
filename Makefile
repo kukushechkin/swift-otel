@@ -66,8 +66,11 @@ OTLP_GRPC_PROTOS += $(PROTO_ROOT)/opentelemetry/proto/collector/metrics/v1/metri
 OTLP_GRPC_PROTOS += $(PROTO_ROOT)/opentelemetry/proto/collector/trace/v1/trace_service.proto
 OTLP_GRPC_PROTOS += $(PROTO_ROOT)/opentelemetry/proto/collector/profiles/v1development/profiles_service.proto
 
-OTLP_CORE_SWIFTS += $(subst $(PROTO_ROOT),$(OTLP_CORE_SWIFT_ROOT),$(OTLP_CORE_PROTOS:.proto=.pb.swift))
+OTLP_CORE_SWIFTS += $(subst $(PROTO_ROOT),$(OTLP_CORE_SWIFT_ROOT),$(patsubst %.proto,%.pb.swift,$(filter $(PROTO_ROOT)/%,$(OTLP_CORE_PROTOS))))
 OTLP_CORE_SWIFTS += $(subst $(PROTO_ROOT),$(OTLP_CORE_SWIFT_ROOT),$(OTLP_GRPC_PROTOS:.proto=.pb.swift))
+# grpc-status-proto/status.proto isn't under $(PROTO_ROOT), so protoc writes its output relative to
+# --swift_out directly, rather than mirroring the grpc-status-proto/ directory structure.
+OTLP_CORE_SWIFTS += $(OTLP_CORE_SWIFT_ROOT)/status.pb.swift
 
 OTLP_GRPC_SWIFTS += $(subst $(PROTO_ROOT),$(OTLP_GRPC_SWIFT_ROOT),$(OTLP_GRPC_PROTOS:.proto=.grpc.swift))
 
