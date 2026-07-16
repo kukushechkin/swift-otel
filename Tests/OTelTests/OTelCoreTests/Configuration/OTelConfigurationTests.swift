@@ -600,6 +600,26 @@ import Testing
         ]).logs.level.backing == .error)
     }
 
+    // Profiles is a v1development signal with no OTel-spec environment variables defined yet, so unlike
+    // traces/metrics/logs, there are no `applyingEnvironmentOverrides` assertions here.
+    @Test func testProfilesExporter() {
+        #expect(OTel.Configuration.default.profiles.enabled == false)
+        #expect(OTel.Configuration.default.profiles.exportInterval == .seconds(60))
+        #expect(OTel.Configuration.default.profiles.exportTimeout == .seconds(30))
+        #expect(OTel.Configuration.default.profiles.exporter.backing == .otlp)
+
+        OTel.Configuration.default.with { config in
+            config.profiles.exporter = .console
+            #expect(config.profiles.exporter.backing == .console)
+
+            config.profiles.exporter = .none
+            #expect(config.profiles.exporter.backing == .none)
+
+            config.profiles.exporter = .otlp
+            #expect(config.profiles.exporter.backing == .otlp)
+        }
+    }
+
     // OTEL_EXPORTER_OTLP_ENDPOINT (OTLP/HTTP edition).
     // https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
     // https://opentelemetry.io/docs/specs/otel/protocol/exporter/#configuration-options
@@ -610,6 +630,7 @@ import Testing
         #expect(OTel.Configuration.OTLPExporterConfiguration.default.logsHTTPEndpoint == "http://localhost:4318/v1/logs")
         #expect(OTel.Configuration.OTLPExporterConfiguration.default.metricsHTTPEndpoint == "http://localhost:4318/v1/metrics")
         #expect(OTel.Configuration.OTLPExporterConfiguration.default.tracesHTTPEndpoint == "http://localhost:4318/v1/traces")
+        #expect(OTel.Configuration.OTLPExporterConfiguration.default.profilesHTTPEndpoint == "http://localhost:4318/v1development/profiles")
 
         #expect(OTel.Configuration.default.logs.otlpExporter.protocol == .httpProtobuf)
         #expect(OTel.Configuration.default.logs.otlpExporter.endpoint == "http://localhost:4318")
@@ -623,6 +644,10 @@ import Testing
         #expect(OTel.Configuration.default.traces.otlpExporter.endpoint == "http://localhost:4318")
         #expect(OTel.Configuration.default.traces.otlpExporter.tracesHTTPEndpoint == "http://localhost:4318/v1/traces")
 
+        #expect(OTel.Configuration.default.profiles.otlpExporter.protocol == .httpProtobuf)
+        #expect(OTel.Configuration.default.profiles.otlpExporter.endpoint == "http://localhost:4318")
+        #expect(OTel.Configuration.default.profiles.otlpExporter.profilesHTTPEndpoint == "http://localhost:4318/v1development/profiles")
+
         // OTLP/HTTP endpoint in-code overrides (manually set => no path gets automatically appended).
         OTel.Configuration.default.with { config in
             #expect(config.logs.otlpExporter.endpoint == "http://localhost:4318")
@@ -633,6 +658,8 @@ import Testing
             #expect(config.metrics.otlpExporter.metricsHTTPEndpoint == "https://other-otel-collector.example.com:3123/custom")
             config.traces.otlpExporter.endpoint = "https://other-otel-collector.example.com:3123/custom"
             #expect(config.traces.otlpExporter.tracesHTTPEndpoint == "https://other-otel-collector.example.com:3123/custom")
+            config.profiles.otlpExporter.endpoint = "https://other-otel-collector.example.com:3123/custom"
+            #expect(config.profiles.otlpExporter.profilesHTTPEndpoint == "https://other-otel-collector.example.com:3123/custom")
         }
 
         // OTLP/HTTP environment overrides.

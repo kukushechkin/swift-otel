@@ -46,6 +46,16 @@ import Tracing
         }
     }
 
+    #if Profiling
+    @Test func testMakeProfilingBackend() async throws {
+        await #expect(processExitsWith: .success, "Running in a separate process because test uses bootstrap") {
+            var config = OTel.Configuration.default
+            config.profiles.enabled = true
+            _ = try OTel.makeProfilingBackend(configuration: config)
+        }
+    }
+    #endif
+
     @Test func testBootstrapMetricsBackend() async throws {
         // Bootstrapping once succeeds.
         await #expect(processExitsWith: .success, "Running in a separate process because test uses bootstrap") {
@@ -85,6 +95,31 @@ import Tracing
             InstrumentationSystem.bootstrap(NoOpTracer())
         }
     }
+
+    #if Profiling
+    @Test func testBootstrapProfilingBackend() async throws {
+        // Bootstrapping once succeeds.
+        await #expect(processExitsWith: .success, "Running in a separate process because test uses bootstrap") {
+            var config = OTel.Configuration.default
+            config.logs.enabled = false
+            config.metrics.enabled = false
+            config.traces.enabled = false
+            config.profiles.enabled = true
+            _ = try OTel.bootstrap(configuration: config)
+        }
+        // Unlike logs/metrics/traces, profiling doesn't bootstrap a process-global system (there's no
+        // `ProfilingSystem` to register with), so a second bootstrap in the same process doesn't fail.
+        await #expect(processExitsWith: .success, "Running in a separate process because test uses bootstrap") {
+            var config = OTel.Configuration.default
+            config.logs.enabled = false
+            config.metrics.enabled = false
+            config.traces.enabled = false
+            config.profiles.enabled = true
+            _ = try OTel.bootstrap(configuration: config)
+            _ = try OTel.bootstrap(configuration: config)
+        }
+    }
+    #endif
 
     @Test func testBootstrapLoggingBackend() async throws {
         // Bootstrapping once succeeds.
