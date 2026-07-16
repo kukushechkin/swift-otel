@@ -16,7 +16,9 @@ let package = Package(
     traits: [
         .trait(name: "OTLPHTTP", description: "OTLP/HTTP exporter support"),
         .trait(name: "OTLPGRPC", description: "OTLP/gRPC exporter support"),
-        .trait(name: "Profiling", description: "Continuous profiling support"),
+        // Profiles have no working gRPC exporter yet, so profiling always needs OTLPHTTP -- the generated
+        // profiles proto types themselves are also gated on `OTLPHTTP || OTLPGRPC`.
+        .trait(name: "Profiling", description: "Continuous profiling support", enabledTraits: ["OTLPHTTP"]),
         .default(enabledTraits: ["OTLPHTTP", "OTLPGRPC"]),
     ],
     dependencies: [
