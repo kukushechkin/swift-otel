@@ -379,13 +379,13 @@ internal enum WrappedProfileExporter: OTelProfileExporter {
     }
 
     init(configuration: OTel.Configuration, logger: Logger) throws {
-        switch configuration.traces.exporter.backing {
+        switch configuration.profiles.exporter.backing {
         case .otlp:
-            switch configuration.traces.otlpExporter.protocol.backing {
+            switch configuration.profiles.otlpExporter.protocol.backing {
             case .grpc:
                 #if OTLPGRPC
 //                if #available(gRPCSwift, *) {
-//                    let exporter = try OTLPGRPCProfileExporter(configuration: configuration.traces.otlpExporter, logger: logger)
+//                    let exporter = try OTLPGRPCProfileExporter(configuration: configuration.profiles.otlpExporter, logger: logger)
 //                    self = .grpc(exporter)
 //                } else {
                 fatalError("Using the OTLP/gRPC exporter is not supported on this platform.")
@@ -395,15 +395,14 @@ internal enum WrappedProfileExporter: OTelProfileExporter {
                 #endif
             case .httpProtobuf, .httpJSON:
                 #if OTLPHTTP
-                let exporter = try OTLPHTTPProfileExporter(configuration: configuration.traces.otlpExporter, logger: logger)
+                let exporter = try OTLPHTTPProfileExporter(configuration: configuration.profiles.otlpExporter, logger: logger)
                 self = .http(exporter)
                 #else
                 fatalError("Using the OTLP/HTTP exporter requires the `OTLPHTTP` trait enabled.")
                 #endif
             }
+        case .console: self = .console(OTelConsoleProfileExporter())
         case .none: self = .none
-        case .console, .jaeger, .zipkin:
-            throw NotImplementedError()
         }
     }
 }
