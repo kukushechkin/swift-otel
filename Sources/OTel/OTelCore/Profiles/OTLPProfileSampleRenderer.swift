@@ -113,8 +113,8 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
         let cpuID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "cpuID", "cpuID")
         let nanosecondsID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "nanoseconds", "nanoseconds")
 
-        // hack
-        dictionary.mappingTable.append(.init())
+        // hack?
+        // dictionary.mappingTable.append(.init())
 
         let profile = Opentelemetry_Proto_Profiles_V1development_Profile.with { profile in
             profile.sample = samples
@@ -139,9 +139,6 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
             profilesData.dictionary = dictionary
             profilesData.resourceProfiles = [
                 .with { resourceProfile in
-                    resourceProfile.resource = .with { resource in
-                        resource.attributes = .init(["service_name": "FOO"])
-                    }
                     resourceProfile.scopeProfiles = [
                         .with { scopeProfile in
                             scopeProfile.profiles = [profile]
