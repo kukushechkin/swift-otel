@@ -119,7 +119,7 @@ extension OTel {
     package static func bootstrap(configuration: Configuration = .default, environment: [String: String]) throws -> some Service {
         let logger = configuration.makeDiagnosticLogger().withMetadata(component: "bootstrap")
         var configuration = configuration
-        if configuration.logs.disabled, configuration.metrics.disabled, configuration.traces.disabled {
+        if configuration.logs.disabled, configuration.metrics.disabled, configuration.traces.disabled, !configuration.profiles.enabled {
             throw OTel.Configuration.Error.invalidConfiguration("bootstrap called but config has all telemetry disabled")
         }
 
