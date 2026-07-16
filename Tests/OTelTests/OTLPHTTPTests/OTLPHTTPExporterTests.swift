@@ -267,6 +267,95 @@ import Tracing
         }
     }
 
+    #if Profiling
+    // These profile exporter tests live in this suite (rather than a separate one) so that they share this
+    // suite's `.serialized` trait -- keeping them from racing other tests here over the shared test server /
+    // event loop group singleton.
+    @Test func testOTLPHTTPProfileExporterProtobuf() async throws {
+        try await withThrowingTaskGroup { group in
+            let testServer = NIOHTTP1TestServer(group: .singletonMultiThreadedEventLoopGroup)
+            defer { #expect(throws: Never.self) { try testServer.stop() } }
+
+            // Client
+            group.addTask {
+                var config = OTel.Configuration.OTLPExporterConfiguration.default
+                config.endpoint = "http://127.0.0.1:\(testServer.serverPort)/some/path"
+                config.protocol = .httpProtobuf
+                let exporter = try OTLPHTTPProfileExporter(configuration: config)
+                let batch = [Opentelemetry_Proto_Profiles_V1development_ResourceProfiles.stub()]
+                await #expect(throws: Never.self) { try await exporter.export(batch, .init()) }
+            }
+
+            try testServer.receiveHeadAndVerify { head in
+                #expect(head.method == .POST)
+                #expect(head.uri == "/some/path")
+                #expect(head.headers["Content-Type"] == ["application/x-protobuf"])
+            }
+            try testServer.receiveBodyAndVerify { body in
+                let message = try Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesServiceRequest(serializedBytes: ByteBufferWrapper(backing: body))
+                #expect(message.resourceProfiles.count == 1)
+            }
+            try testServer.receiveEndAndVerify { trailers in
+                #expect(trailers == nil)
+            }
+
+            try testServer.writeOutbound(.head(.init(version: .http1_1, status: .ok, headers: ["Content-Type": "application/x-protobuf"])))
+            let response = Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesServiceResponse()
+            let body: ByteBufferWrapper = try response.serializedBytes()
+            try testServer.writeOutbound(.body(.byteBuffer(body.backing)))
+            try testServer.writeOutbound(.end(nil))
+
+            try await group.waitForAll()
+        }
+    }
+
+    @Test func testOTLPHTTPProfileExporterJSON() async throws {
+        try await withThrowingTaskGroup { group in
+            let testServer = NIOHTTP1TestServer(group: .singletonMultiThreadedEventLoopGroup)
+            defer { #expect(throws: Never.self) { try testServer.stop() } }
+
+            // Client
+            group.addTask {
+                var config = OTel.Configuration.OTLPExporterConfiguration.default
+                config.protocol = .httpJSON
+                config.endpoint = "http://127.0.0.1:\(testServer.serverPort)/some/path"
+                let exporter = try OTLPHTTPProfileExporter(configuration: config)
+                let batch = [Opentelemetry_Proto_Profiles_V1development_ResourceProfiles.stub()]
+                await #expect(throws: Never.self) { try await exporter.export(batch, .init()) }
+            }
+
+            try testServer.receiveHeadAndVerify { head in
+                #expect(head.method == .POST)
+                #expect(head.uri == "/some/path")
+                #expect(head.headers["Content-Type"] == ["application/json"])
+            }
+            try testServer.receiveBodyAndVerify { body in
+                let message = try Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesServiceRequest(jsonUTF8Bytes: ByteBufferWrapper(backing: body))
+                #expect(message.resourceProfiles.count == 1)
+            }
+            try testServer.receiveEndAndVerify { trailers in
+                #expect(trailers == nil)
+            }
+
+            try testServer.writeOutbound(.head(.init(version: .http1_1, status: .ok, headers: ["Content-Type": "application/json"])))
+            let response = Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesServiceResponse()
+            let body: ByteBufferWrapper = try response.jsonUTF8Bytes()
+            try testServer.writeOutbound(.body(.byteBuffer(body.backing)))
+            try testServer.writeOutbound(.end(nil))
+
+            try await group.waitForAll()
+        }
+    }
+
+    @Test func testOTLPHTTPProfileExporterEmptyBatchSkipsRequest() async throws {
+        var config = OTel.Configuration.OTLPExporterConfiguration.default
+        config.endpoint = "http://127.0.0.1:1/unreachable"
+        let exporter = try OTLPHTTPProfileExporter(configuration: config)
+        // No request is made for an empty batch, so this must not attempt to connect at all.
+        try await exporter.export([], .init())
+    }
+    #endif
+
     @Test func testRetryPolicyBackoff() async throws {
         var retryPolicy = HTTPClient.RetryPolicy(
             maxAttempts: 7,
@@ -846,6 +935,15 @@ extension OTLPHTTPSpanExporter {
         try self.init(configuration: configuration, logger: ._otelDisabled)
     }
 }
+
+#if Profiling
+extension OTLPHTTPProfileExporter {
+    // Overload with logging disabled.
+    convenience init(configuration: OTel.Configuration.OTLPExporterConfiguration) throws {
+        try self.init(configuration: configuration, logger: ._otelDisabled)
+    }
+}
+#endif
 
 private struct TestError: Error, CustomStringConvertible {
     var description: String { "custom error" }

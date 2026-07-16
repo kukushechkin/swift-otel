@@ -18,22 +18,22 @@
 import Testing
 
 @Suite struct OTelConsoleProfileExporterTests {
-    @Test func testExportDoesNotThrow() async throws {
+    @Test func testExportDoesNotThrow() {
         let exporter = OTelConsoleProfileExporter()
-        try await exporter.export([.stub()], .init())
+        exporter.export([.stub()], .init())
     }
 
-    @Test func testExportOfEmptyBatchDoesNotThrow() async throws {
+    @Test func testExportOfEmptyBatchDoesNotThrow() {
         let exporter = OTelConsoleProfileExporter()
-        try await exporter.export([], .init())
+        exporter.export([], .init())
     }
 
-    @Test func testForceFlushDoesNotThrow() async throws {
-        try await OTelConsoleProfileExporter().forceFlush()
+    @Test func testForceFlushDoesNotThrow() {
+        OTelConsoleProfileExporter().forceFlush()
     }
 
-    @Test func testShutdownCompletes() async {
-        await OTelConsoleProfileExporter().shutdown()
+    @Test func testShutdownCompletes() {
+        OTelConsoleProfileExporter().shutdown()
     }
 }
 #endif
