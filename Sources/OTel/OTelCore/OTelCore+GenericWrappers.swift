@@ -316,6 +316,7 @@ internal enum WrappedSpanExporter: OTelSpanExporter {
     }
 }
 
+#if Profiling
 internal enum WrappedProfileExporter: OTelProfileExporter {
     #if OTLPGRPC
     case grpc(any OTelProfileExporter)
@@ -406,6 +407,7 @@ internal enum WrappedProfileExporter: OTelProfileExporter {
         }
     }
 }
+#endif
 
 internal enum WrappedSampler: OTelSampler {
     case constant(OTelConstantSampler)

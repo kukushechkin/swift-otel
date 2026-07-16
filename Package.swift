@@ -16,6 +16,7 @@ let package = Package(
     traits: [
         .trait(name: "OTLPHTTP", description: "OTLP/HTTP exporter support"),
         .trait(name: "OTLPGRPC", description: "OTLP/gRPC exporter support"),
+        .trait(name: "Profiling", description: "Continuous profiling support"),
         .default(enabledTraits: ["OTLPHTTP", "OTLPGRPC"]),
     ],
     dependencies: [
@@ -73,8 +74,8 @@ let package = Package(
                 .product(name: "GRPCProtobuf", package: "grpc-swift-protobuf", condition: .when(traits: ["OTLPGRPC"], alwaysIncludeOnKnownBrokenToolchains: true)),
                 .product(name: "GRPCCore", package: "grpc-swift-2", condition: .when(traits: ["OTLPGRPC"], alwaysIncludeOnKnownBrokenToolchains: true)),
                 .product(name: "GRPCNIOTransportHTTP2", package: "grpc-swift-nio-transport", condition: .when(traits: ["OTLPGRPC"], alwaysIncludeOnKnownBrokenToolchains: true)),
-                // TODO: think about how to put this behind a trait
-                .product(name: "ProfileRecorderServer", package: "swift-profile-recorder"),
+                // Continuous profiling -- only when Profiling trait is enabled.
+                .product(name: "ProfileRecorderServer", package: "swift-profile-recorder", condition: .when(traits: ["Profiling"], alwaysIncludeOnKnownBrokenToolchains: true)),
             ],
             swiftSettings: sharedSwiftSettings
         ),

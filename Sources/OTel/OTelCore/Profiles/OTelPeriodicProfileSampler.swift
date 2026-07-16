@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if !Profiling
+// Empty when above trait(s) are disabled.
+#else
 import _ProfileRecorderSampleConversion
 import AsyncAlgorithms
 import Foundation
@@ -128,3 +131,4 @@ extension OTelPeriodicProfileSampler where Clock == ContinuousClock {
         )
     }
 }
+#endif

@@ -407,6 +407,7 @@ extension OTel {
         return (tracer, serviceGroup)
     }
 
+    #if Profiling
     public static func makeProfilingBackend(configuration: OTel.Configuration = .default) throws -> some Service {
         let logger = configuration.makeDiagnosticLogger().withMetadata(component: "makeProfilingBackend")
         var configuration = configuration
@@ -439,4 +440,5 @@ extension OTel {
         let serviceGroup = ServiceGroup(configuration: .init(services: serviceConfigs, logger: logger))
         return serviceGroup
     }
+    #endif
 }

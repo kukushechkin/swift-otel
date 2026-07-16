@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if !Profiling
+// Empty when above trait(s) are disabled.
+#else
 import ServiceLifecycle
 
 struct OTelConsoleProfileExporter: OTelProfileExporter {
@@ -28,3 +31,4 @@ struct OTelConsoleProfileExporter: OTelProfileExporter {
     func forceFlush() {}
     func shutdown() {}
 }
+#endif

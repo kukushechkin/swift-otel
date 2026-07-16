@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if !Profiling
+// Empty when above trait(s) are disabled.
+#else
 import ServiceLifecycle
 
 protocol OTelProfileExporter: Service, Sendable {
@@ -20,3 +23,4 @@ protocol OTelProfileExporter: Service, Sendable {
 
     func shutdown() async
 }
+#endif

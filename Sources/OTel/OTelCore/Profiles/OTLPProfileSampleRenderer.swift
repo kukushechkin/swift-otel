@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if !Profiling
+// Empty when above trait(s) are disabled.
+#else
 import _ProfileRecorderSampleConversion
 import ProfileRecorder
 internal import struct NIOCore.ByteBuffer
@@ -152,3 +155,4 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
         return output.backing
     }
 }
+#endif

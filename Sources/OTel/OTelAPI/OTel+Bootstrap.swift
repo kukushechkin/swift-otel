@@ -137,7 +137,11 @@ extension OTel {
             try services.append(bootstrapTraces(resolvedConfiguration: configuration, logger: logger))
         }
         if configuration.profiles.enabled {
+            #if Profiling
             try services.append(bootstrapProfiles(resolvedConfiguration: configuration, logger: logger))
+            #else
+            fatalError("Using continuous profiling requires the `Profiling` trait enabled.")
+            #endif
         }
         if services.isEmpty {
             // If we created a service group that doesn't contain any services, it would return immediately, which would
@@ -206,11 +210,13 @@ extension OTel {
         return backend.service
     }
 
+    #if Profiling
     internal static func bootstrapProfiles(resolvedConfiguration: OTel.Configuration, logger: Logger) throws -> some Service {
         let backend = try makeProfilingBackend(resolvedConfiguration: resolvedConfiguration, logger: logger)
         logger.info("Bootstrapping continuous profiling with \(resolvedConfiguration.profiles.exporterName) exporter.")
         return backend
     }
+    #endif
 }
 
 extension OTel.Configuration.LogsConfiguration {

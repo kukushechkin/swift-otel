@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if !OTLPHTTP
+#if !(OTLPHTTP && Profiling)
 // Empty when above trait(s) are disabled.
 #else
 import Logging
