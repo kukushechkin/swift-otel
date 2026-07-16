@@ -488,7 +488,7 @@ extension OTel.Configuration {
 
         @_documentation(visibility: internal)
         public static let `default`: Self = .init(
-            enabled: true,
+            enabled: false,
             exportInterval: .seconds(60),
             exportTimeout: .seconds(30),
             exporter: .otlp,
