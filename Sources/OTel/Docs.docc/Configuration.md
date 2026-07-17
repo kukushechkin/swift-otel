@@ -35,6 +35,11 @@
 - ``traces``
 - ``TracesConfiguration``
 
+### Profiling backend
+
+- ``profiles``
+- ``ProfilesConfiguration``
+
 ### Logging metadata provider
 
 - ``LoggingMetadataProviderConfiguration``

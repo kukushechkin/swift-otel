@@ -18,7 +18,7 @@ extension OTel {
     ///
     /// This type provides a centralized place to configure all aspects of the OTLP observability backends,
     /// including service identification, resource attributes, logging, propagation, and signal-specific settings
-    /// for traces, metrics, and logs.
+    /// for traces, metrics, logs, and profiles.
     ///
     /// The property names, supported values, and defaults closely follow the OTel specification.
     ///
@@ -48,6 +48,8 @@ extension OTel {
     /// config.metrics.otlpExporter.timeout = .seconds(5)
     /// // Disable logs entirely.
     /// config.logs.enabled = false
+    /// // Opt in to continuous profiling (requires the `Profiling` trait; off by default).
+    /// config.profiles.enabled = true
     /// ```
     ///
     /// - Seealso:
@@ -130,7 +132,10 @@ extension OTel {
 
         /// Configuration for continuous profiling integration.
         ///
-        /// - Default value: `.default` (enabled with default configuration).
+        /// Controls profile sampling, processing, and export behavior. Profiles capture stack samples from the
+        /// running process, complementing traces, metrics, and logs with low-level performance data.
+        ///
+        /// - Default value: `.default` (disabled by default, and requires the `Profiling` trait).
         public var profiles: ProfilesConfiguration
 
         /// Default configuration.
@@ -474,18 +479,53 @@ extension OTel.Configuration {
 
     /// Configuration for continuous profiling integration.
     ///
-    /// TODO: better docs.
+    /// Controls continuous profile sampling and export behavior. Profiles capture stack samples from the
+    /// running process over time, complementing traces, metrics, and logs with low-level performance data.
+    ///
+    /// - Important: Continuous profiling is `v1development` in the OTel specification and may change in
+    ///   backwards-incompatible ways in a future release of the specification, the OTel Collector, or this
+    ///   package.
+    /// - Important: Requires the `Profiling` trait to be enabled on this package -- it is not part of the
+    ///   default trait set. Even with the trait enabled, profiling remains off unless `enabled` is explicitly
+    ///   set to `true`.
     public struct ProfilesConfiguration: Sendable {
+        /// Whether continuous profiling is enabled.
+        ///
+        /// - Environment variable(s): None. The OTel specification does not yet define environment variables
+        ///   for the profiles signal, since it is still `v1development`.
+        /// - Default value: `false`.
+        /// - Notes: Unlike the other signals, this defaults to `false` even when the `Profiling` trait is
+        ///   enabled -- profiling must be explicitly opted into.
         public var enabled: Bool
 
+        /// Interval between profile export attempts.
+        ///
+        /// - Environment variable(s): None.
+        /// - Default value: 60 seconds.
         public var exportInterval: Duration
 
+        /// Maximum time to wait for each export operation.
+        ///
+        /// - Environment variable(s): None.
+        /// - Default value: 30 seconds.
         public var exportTimeout: Duration
 
+        /// Selection of profiles exporter implementation.
+        ///
+        /// - Environment variable(s): None.
+        /// - Default value: `.otlp`.
         public var exporter: ExporterSelection
 
+        /// Configuration for OTLP profiles export when using the OTLP exporter.
+        ///
+        /// - Default value: `.default`.
+        /// - Notes: Only the OTLP/HTTP protocol is currently supported for profiles; OTLP/gRPC is not yet
+        ///   implemented.
         public var otlpExporter: OTLPExporterConfiguration
 
+        /// Default profiles configuration.
+        ///
+        /// See individual property documentation for specific default values.
         @_documentation(visibility: internal)
         public static let `default`: Self = .init(
             enabled: false,
@@ -795,6 +835,9 @@ extension OTel.Configuration.LogsConfiguration {
 }
 
 extension OTel.Configuration.ProfilesConfiguration {
+    /// Selection of profiles exporter implementation.
+    ///
+    /// Determines how collected profiles are exported from the application to observability backends.
     public struct ExporterSelection: Sendable {
         enum Backing: String, CaseIterable, Sendable {
             case otlp
@@ -804,13 +847,13 @@ extension OTel.Configuration.ProfilesConfiguration {
 
         var backing: Backing
 
-        /// OTLP (OpenTelemetry Protocol) exporter for traces.
+        /// OTLP (OpenTelemetry Protocol) exporter for profiles.
         public static let otlp: Self = .init(backing: .otlp)
 
-        /// No automatically configured exporter for traces.
+        /// No automatically configured exporter for profiles.
         public static let none: Self = .init(backing: .none)
 
-        /// Console exporter for traces (development/debugging).
+        /// Console exporter for profiles (development/debugging).
         public static let console: Self = .init(backing: .console)
     }
 }

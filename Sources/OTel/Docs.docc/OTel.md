@@ -15,6 +15,7 @@
 - ``makeLoggingBackend(configuration:)``
 - ``makeMetricsBackend(configuration:)``
 - ``makeTracingBackend(configuration:)``
+- ``makeProfilingBackend(configuration:)``
 - ``makeLoggingMetadataProvider(configuration:)``
 
 ### Trace ID

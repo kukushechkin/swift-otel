@@ -408,6 +408,51 @@ extension OTel {
     }
 
     #if Profiling
+    /// Create a continuous profiling backend with an OTLP exporter.
+    ///
+    /// - Parameter configuration: Configuration for the profiling backend.
+    ///
+    ///   This value can be used to configure the profiling backend and defaults to `OTel.Configuration.default`,
+    ///   which has profiling disabled -- you must explicitly set `configuration.profiles.enabled = true` to use
+    ///   this API.
+    ///
+    ///   Configuration can also be provided at runtime with environment variable overrides, though the OTel
+    ///   specification does not yet define any for the profiles signal, since it is still `v1development`.
+    ///
+    /// - Returns: A service that manages the background work, and graceful shutdown, of the profile sampler and
+    ///   exporter.
+    ///
+    ///   > Important: You must run the returned service in a `ServiceGroup` alongside your application services
+    ///     for profiles to be sampled and exported.
+    ///
+    /// Unlike logging, metrics, and tracing, there is no process-global system to bootstrap for profiling, so
+    /// this API returns only a service to run, not a separate factory.
+    ///
+    /// > Note: Use this API only if you need to combine the profiling backend with other functionality, or
+    ///   control its lifecycle independently of the other signals. If you do not need this level of control, use
+    ///   `OTel.bootstrap(configuration:)`.
+    ///
+    /// > Important: Requires the `Profiling` trait to be enabled on this package.
+    ///
+    /// ## Example usage
+    ///
+    /// ```swift
+    /// // Start with defaults, and opt in to profiling.
+    /// var config = OTel.Configuration.default
+    /// config.profiles.enabled = true
+    ///
+    /// // Create the profiling backend.
+    /// let profiling = try OTel.makeProfilingBackend(configuration: config)
+    ///
+    /// // Run the background service alongside your application.
+    /// let server = MockService(name: "AdopterServer")
+    /// let serviceGroup = ServiceGroup(services: [profiling, server], logger: .init(label: "ServiceGroup"))
+    /// try await serviceGroup.run()
+    /// ```
+    ///
+    /// - SeeAlso:
+    ///   - ``bootstrap(configuration:)`` for simple, all-in-one observability setup
+    ///   - ``Configuration`` for configuration options
     public static func makeProfilingBackend(configuration: OTel.Configuration = .default) throws -> some Service {
         let logger = configuration.makeDiagnosticLogger().withMetadata(component: "makeProfilingBackend")
         var configuration = configuration

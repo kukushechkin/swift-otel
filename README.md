@@ -3,6 +3,10 @@
 An [OpenTelemetry Protocol (OTLP)][otlp] backend for Swift Log, Swift Metrics, and Swift Distributed Tracing.
 
 > Note: This package does not provide an OTel instrumentation API, or general-purpose OTel SDK.
+>
+> Continuous profiling support is experimental. It tracks the OTel profiles signal, which is still
+> `v1development` upstream, and is off by default -- opt in with the `Profiling` trait and
+> `configuration.profiles.enabled = true`.
 
 - 📚 **Documentation** is available on the [Swift Package Index][docs]
 - 💻 **Examples** are available in the [Examples][examples] directory

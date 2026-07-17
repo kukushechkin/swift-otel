@@ -32,6 +32,10 @@ extension OTel {
     ///   `OTel.Configuration.default`, which bootstraps all backends with the default configuration defined in the
     ///   OpenTelemetry specification.
     ///
+    ///   Continuous profiling is the exception: it defaults to disabled, and additionally requires the
+    ///   `Profiling` trait to be enabled on this package. With the trait disabled, setting
+    ///   `configuration.profiles.enabled = true` results in a fatal error.
+    ///
     ///   Configuration can also be provided at runtime with environment variable overrides.
     ///
     /// - Returns: A service that manages the background work for the bootstrapped observability backends.
@@ -44,7 +48,7 @@ extension OTel {
     ///   observability data to be exported.
     ///
     /// This is the primary API for setting up observability in your Swift application. Call this function once during
-    /// application startup to configure logging, metrics, and tracing with OTLP exporters.
+    /// application startup to configure logging, metrics, tracing, and profiling with OTLP exporters.
     ///
     /// This function bootstraps the process-global observability subsystems that are enabled in the configuration.
     /// Attempting to bootstrap these subsystems multiple times will result in a fatal error. If you wish to bootstrap
@@ -103,6 +107,8 @@ extension OTel {
     /// config.metrics.otlpExporter.timeout = .seconds(5)
     /// // Disable logs entirely.
     /// config.logs.enabled = false
+    /// // Opt in to continuous profiling (requires the `Profiling` trait; off by default).
+    /// config.profiles.enabled = true
     ///
     /// // Bootstrap observability backends and still get a single, opaque service, to run.
     /// let observability = try OTel.bootstrap(configuration: config)
