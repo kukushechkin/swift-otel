@@ -24,6 +24,8 @@ enum HelloWorldHummingbirdServer {
         config.logs.batchLogRecordProcessor.scheduleDelay = .seconds(3)
         config.metrics.exportInterval = .seconds(3)
         config.traces.batchSpanProcessor.scheduleDelay = .seconds(3)
+        config.profiles.enabled = true
+        config.profiles.exportInterval = .seconds(3)
         let observability = try OTel.bootstrap(configuration: config)
 
         // Create an HTTP server with instrumentation middlewares added.
