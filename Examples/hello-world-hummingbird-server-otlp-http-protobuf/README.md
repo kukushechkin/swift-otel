@@ -6,8 +6,8 @@ An HTTP server that uses middleware to emit telemetry for each HTTP request.
 
 ## Overview
 
-This example bootstraps the logging, metrics, and tracing Swift subsystems to export
-logs, metrics, and traces to file, Prometheus, and Jaeger, respectively, via an OTel Collector.
+This example bootstraps the logging, metrics, tracing, and profiling Swift subsystems to export
+logs, metrics, traces, and profiles to file, Prometheus, Jaeger, and Pyroscope, respectively, via an OTel Collector.
 
 It then starts a Hummingbird HTTP server along with its associated middleware for instrumentation.
 
@@ -15,12 +15,16 @@ Telemetry data is exported using OTLP/HTTP+Protobuf (the default serialization).
 
 ## Package traits
 
-This example package depends on Swift OTel with only the `OTLPHTTP` trait enabled.
+This example package depends on Swift OTel with the `OTLPHTTP` and `Profiling` traits enabled.
 
-This is not strictly necessary because the default traits include both `OTLPHTTP` and `OTLPGRPC`, but it will reduce
- the dependency graph with a new enough Swift toolchain.
+This is not strictly necessary for `OTLPHTTP` because the default traits include both `OTLPHTTP` and `OTLPGRPC`, but
+ it will reduce the dependency graph with a new enough Swift toolchain. `Profiling` is required to demonstrate
+ continuous profiling, since it is not part of the default trait set.
 
 To use the OTLP/gRPC exporter, enable the `OTLPGRPC` trait or remove the `traits:` parameter on the package dependency.
+
+> **Note:** Continuous profiling tracks the OTel profiles signal, which is still `v1development` upstream. This
+> example enables the OTel Collector's `service.profilesSupport` feature gate to receive it.
 
 ## Testing
 
@@ -123,3 +127,11 @@ See the traces for the recent requests and click to select a trace for a given r
 
 Click to expand the trace, the metadata associated with the request and the
 process, and the events.
+
+### Visualizing the profiles using Pyroscope UI
+
+Visit the Pyroscope UI in your browser at [localhost:4040](http://localhost:4040).
+
+The server continuously samples its own stack while it's running, so you don't need to be sending requests for
+profiles to appear -- give it a few export intervals (a few seconds), then select `hello_world` from the app
+dropdown to see the flame graph.

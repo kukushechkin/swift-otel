@@ -34,10 +34,37 @@ enum HelloWorldHummingbirdServer {
         router.middlewares.add(MetricsMiddleware())
         router.middlewares.add(LogRequestsMiddleware(.info))
         router.get("hello") { _, _ in "hello" }
+        router.get("burn") { _, _ in
+            // A deliberately expensive, clearly-named call path so it's easy to spot in a profiler flame graph.
+            simulateExpensiveWork()
+            return "burned"
+        }
         var app = Application(router: router)
 
         // Add the observability service to the Hummingbird service group and run the server.
         app.addServices(observability)
         try await app.runService()
+    }
+
+    static func simulateExpensiveWork() {
+        crunchFibonacciNumbers()
+    }
+
+    static func crunchFibonacciNumbers() {
+        // Run for longer than the profiling export interval, so a periodic sample is very likely to land while
+        // this is still on the stack, regardless of how fast `naiveFibonacci` runs on a given machine.
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        var total = 0
+        var n = 20
+        while ContinuousClock.now < deadline {
+            total += naiveFibonacci(n)
+            n = n == 20 ? 30 : 20
+        }
+        // Prevent the optimizer from eliminating the "unused" result.
+        precondition(total >= 0)
+    }
+
+    static func naiveFibonacci(_ n: Int) -> Int {
+        n < 2 ? n : naiveFibonacci(n - 1) + naiveFibonacci(n - 2)
     }
 }
