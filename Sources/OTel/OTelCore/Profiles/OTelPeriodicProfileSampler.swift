@@ -55,8 +55,8 @@ struct OTelPeriodicProfileSampler<Clock: _Concurrency.Clock> where Clock.Duratio
                 let symbolisedSamplesPath = tmpDirPath.appending("samples.otlp.pb")
 
                 return try await ProfileRecorderSampler.sharedInstance._withSamples(
-                    sampleCount: 1,
-                    timeBetweenSamples: .zero,
+                    sampleCount: 10,
+                    timeBetweenSamples: .milliseconds(100),
                     format: .raw,
                     symbolizer: symbolizer,
                     logger: logger

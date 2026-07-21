@@ -116,8 +116,13 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
         let cpuID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "cpuID", "cpuID")
         let nanosecondsID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "nanoseconds", "nanoseconds")
 
-        // hack?
-        // dictionary.mappingTable.append(.init())
+        // `Location.mapping_index` is optional and we never set it, which the OTel spec allows ("can be unset if
+        // the mapping is unknown or not applicable"). However, at least Pyroscope's OTLP converter dereferences
+        // an unset `mapping_index` as if it were `0` rather than treating it as absent, and fails the whole
+        // export with "could not access mapping: index 0 out of bounds" if `mapping_table` is empty. Since the
+        // spec only mandates a placeholder for `string_table[0]` (not `mapping_table[0]`), this is arguably a
+        // consumer-side bug, but we need to work around it to interoperate with that consumer today.
+        dictionary.mappingTable.append(.init())
 
         let profile = Opentelemetry_Proto_Profiles_V1development_Profile.with { profile in
             profile.sample = samples

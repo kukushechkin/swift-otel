@@ -15,7 +15,9 @@
 // Empty when above trait(s) are disabled.
 #else
 import AsyncHTTPClient
+#if OTLPGRPC
 import GRPCProtobuf
+#endif
 import Logging
 import NIOHTTP1
 import NIOSSL
@@ -125,6 +127,7 @@ final class OTLPHTTPExporter<Request: Message, Response: Message>: Sendable {
             // https://opentelemetry.io/docs/specs/otlp/#failures
             // TODO: Apparently failures include Protobuf-encoded GRPC Status -- we could try and include it here.
 
+            #if OTLPGRPC
             if 400 ... 599 ~= response.status.code, #available(gRPCSwift, *) {
                 let body = try await response.body.collect(upTo: 1024)
                 let status = try GoogleRPCStatus(serializedBytes: ByteBufferWrapper(backing: body))
@@ -132,6 +135,9 @@ final class OTLPHTTPExporter<Request: Message, Response: Message>: Sendable {
             } else {
                 logger.debug("Request failed", metadata: ["http_response_code": "\(response.status.code)"])
             }
+            #else
+            logger.debug("Request failed", metadata: ["http_response_code": "\(response.status.code)"])
+            #endif
             throw OTLPHTTPExporterError.requestFailed(response.status)
         }
 
