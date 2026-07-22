@@ -45,8 +45,6 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
 /// Possible values for LogRecord.SeverityNumber.
 package enum Opentelemetry_Proto_Logs_V1_SeverityNumber: SwiftProtobuf.Enum, Swift.CaseIterable {
   package typealias RawValue = Int
-
-  /// UNSPECIFIED is the default SeverityNumber, it MUST NOT be used.
   case unspecified // = 0
   case trace // = 1
   case trace2 // = 2
@@ -253,11 +251,11 @@ package struct Opentelemetry_Proto_Logs_V1_ResourceLogs: Sendable {
   /// The resource for the logs in this message.
   /// If this field is not set then resource info is unknown.
   package var resource: Opentelemetry_Proto_Resource_V1_Resource {
-    get {return _resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
+    get {_resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
     set {_resource = newValue}
   }
   /// Returns true if `resource` has been explicitly set.
-  package var hasResource: Bool {return self._resource != nil}
+  package var hasResource: Bool {self._resource != nil}
   /// Clears the value of `resource`. Subsequent reads from it will return its default value.
   package mutating func clearResource() {self._resource = nil}
 
@@ -289,11 +287,11 @@ package struct Opentelemetry_Proto_Logs_V1_ScopeLogs: Sendable {
   /// Semantically when InstrumentationScope isn't set, it is equivalent with
   /// an empty instrumentation scope name (unknown).
   package var scope: Opentelemetry_Proto_Common_V1_InstrumentationScope {
-    get {return _scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
+    get {_scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
     set {_scope = newValue}
   }
   /// Returns true if `scope` has been explicitly set.
-  package var hasScope: Bool {return self._scope != nil}
+  package var hasScope: Bool {self._scope != nil}
   /// Clears the value of `scope`. Subsequent reads from it will return its default value.
   package mutating func clearScope() {self._scope = nil}
 
@@ -304,7 +302,8 @@ package struct Opentelemetry_Proto_Logs_V1_ScopeLogs: Sendable {
   /// is recorded in. Notably, the last part of the URL path is the version number of the
   /// schema: http[s]://server[:port]/path/<version>. To learn more about Schema URL see
   /// https://opentelemetry.io/docs/specs/otel/schemas/#schema-url
-  /// This schema_url applies to all logs in the "logs" field.
+  /// This schema_url applies to the data in the "scope" field and all logs in the
+  /// "log_records" field.
   package var schemaURL: String = String()
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -355,17 +354,18 @@ package struct Opentelemetry_Proto_Logs_V1_LogRecord: Sendable {
   /// string message (including multi-line) describing the event in a free form or it can
   /// be a structured data composed of arrays and maps of other values. [Optional].
   package var body: Opentelemetry_Proto_Common_V1_AnyValue {
-    get {return _body ?? Opentelemetry_Proto_Common_V1_AnyValue()}
+    get {_body ?? Opentelemetry_Proto_Common_V1_AnyValue()}
     set {_body = newValue}
   }
   /// Returns true if `body` has been explicitly set.
-  package var hasBody: Bool {return self._body != nil}
+  package var hasBody: Bool {self._body != nil}
   /// Clears the value of `body`. Subsequent reads from it will return its default value.
   package mutating func clearBody() {self._body = nil}
 
   /// Additional attributes that describe the specific event occurrence. [Optional].
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   package var droppedAttributesCount: UInt32 = 0

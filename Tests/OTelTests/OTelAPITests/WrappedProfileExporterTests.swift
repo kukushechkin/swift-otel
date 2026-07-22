@@ -50,5 +50,19 @@ import Testing
             return
         }
     }
+
+    #if OTLPGRPC
+    @available(gRPCSwift, *)
+    @Test func testSelectionForOTLPGRPCExporterThrowsRatherThanCrashing() throws {
+        // gRPC export isn't implemented for profiles yet -- this must be a catchable error, not a fatalError, since
+        // it's reachable from ordinary user configuration.
+        var config = OTel.Configuration.default
+        config.profiles.exporter = .otlp
+        config.profiles.otlpExporter.protocol = .grpc
+        #expect(throws: NotImplementedError.self) {
+            _ = try WrappedProfileExporter(configuration: config, logger: ._otelDisabled)
+        }
+    }
+    #endif
 }
 #endif

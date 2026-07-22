@@ -23,6 +23,10 @@ import NIOFileSystem
 import ProfileRecorder
 import ServiceLifecycle
 
+struct MissingResourceProfilesError: Error, CustomStringConvertible {
+    var description: String { "Profile sampler produced no resource profiles." }
+}
+
 struct OTelPeriodicProfileSampler<Clock: _Concurrency.Clock> where Clock.Duration == Duration {
     private let logger: Logger
 
@@ -49,52 +53,64 @@ struct OTelPeriodicProfileSampler<Clock: _Concurrency.Clock> where Clock.Duratio
 
     func tick() async {
         do {
-            let result = try await FileSystem.shared.withTemporaryDirectory {
-                _,
-                    tmpDirPath in
-                let symbolisedSamplesPath = tmpDirPath.appending("samples.otlp.pb")
-
-                return try await ProfileRecorderSampler.sharedInstance._withSamples(
-                    sampleCount: 10,
-                    timeBetweenSamples: .milliseconds(100),
-                    format: .raw,
-                    symbolizer: symbolizer,
-                    logger: logger
-                ) { rawSamplesPath in
-                    let renderer = OTLPProfileSampleRenderer()
-                    let converter = ProfileRecorderSampleConverter(
-                        config: .default,
-                        renderer: renderer,
-                        symbolizer: symbolizer
-                    )
-                    try await converter.convert(
-                        inputRawProfileRecorderFormatPath: rawSamplesPath,
-                        outputPath: symbolisedSamplesPath.string,
-                        format: .perfSymbolized,
-                        logger: logger
-                    )
-                    return renderer.resultForSwiftOTel
-                }
+            try await withTimeout(configuration.exportTimeout, clock: clock) {
+                try await sampleAndExport()
             }
-
-            let batch = [
-                Opentelemetry_Proto_Profiles_V1development_ResourceProfiles.with {
-                    $0.resource = .init(resource)
-                    $0.scopeProfiles = [.with {
-                        $0.scope = .with {
-                            $0.name = "swift-otel"
-                            $0.version = OTelLibrary.version
-                            $0.attributes = []
-                            $0.droppedAttributesCount = 0
-                        }
-                        $0.profiles = result.resourceProfiles.first!.scopeProfiles.first!.profiles
-                    }]
-                },
-            ]
-            try await exporter.export(batch, result.dictionary)
         } catch {
-            logger.info("samples failed", metadata: ["error": "\(error)"])
+            logger.warning("Failed to sample and export profile.", error: error)
         }
+    }
+
+    private func sampleAndExport() async throws {
+        let result = try await FileSystem.shared.withTemporaryDirectory {
+            _,
+                tmpDirPath in
+            let symbolisedSamplesPath = tmpDirPath.appending("samples.otlp.pb")
+
+            return try await ProfileRecorderSampler.sharedInstance._withSamples(
+                sampleCount: 10,
+                timeBetweenSamples: .milliseconds(100),
+                format: .raw,
+                symbolizer: symbolizer,
+                logger: logger
+            ) { rawSamplesPath in
+                let renderer = OTLPProfileSampleRenderer()
+                let converter = ProfileRecorderSampleConverter(
+                    config: .default,
+                    renderer: renderer,
+                    symbolizer: symbolizer
+                )
+                try await converter.convert(
+                    inputRawProfileRecorderFormatPath: rawSamplesPath,
+                    outputPath: symbolisedSamplesPath.string,
+                    format: .perfSymbolized,
+                    logger: logger
+                )
+                return renderer.resultForSwiftOTel
+            }
+        }
+
+        guard let scopeProfiles = result.resourceProfiles.first?.scopeProfiles.first else {
+            // Always populated by `OTLPProfileSampleRenderer.finalise()` today, but this is a different type in a
+            // different file, so don't let a future change to that invariant crash the whole periodic loop.
+            throw MissingResourceProfilesError()
+        }
+
+        let batch = [
+            Opentelemetry_Proto_Profiles_V1development_ResourceProfiles.with {
+                $0.resource = .init(resource)
+                $0.scopeProfiles = [.with {
+                    $0.scope = .with {
+                        $0.name = "swift-otel"
+                        $0.version = OTelLibrary.version
+                        $0.attributes = []
+                        $0.droppedAttributesCount = 0
+                    }
+                    $0.profiles = scopeProfiles.profiles
+                }]
+            },
+        ]
+        try await exporter.export(batch, result.dictionary)
     }
 }
 

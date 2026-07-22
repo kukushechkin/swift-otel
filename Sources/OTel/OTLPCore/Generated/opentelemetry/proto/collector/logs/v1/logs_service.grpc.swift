@@ -32,13 +32,13 @@ internal import GRPCProtobuf
 
 /// Namespace containing generated types for the "opentelemetry.proto.collector.logs.v1.LogsService" service.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-package enum Opentelemetry_Proto_Collector_Logs_V1_LogsService {
+package enum Opentelemetry_Proto_Collector_Logs_V1_LogsService: Sendable {
     /// Service descriptor for the "opentelemetry.proto.collector.logs.v1.LogsService" service.
     package static let descriptor = GRPCCore.ServiceDescriptor(fullyQualifiedService: "opentelemetry.proto.collector.logs.v1.LogsService")
     /// Namespace for method metadata.
-    package enum Method {
+    package enum Method: Sendable {
         /// Namespace for "Export" metadata.
-        package enum Export {
+        package enum Export: Sendable {
             /// Request type for "Export".
             package typealias Input = Opentelemetry_Proto_Collector_Logs_V1_ExportLogsServiceRequest
             /// Response type for "Export".
@@ -46,7 +46,8 @@ package enum Opentelemetry_Proto_Collector_Logs_V1_LogsService {
             /// Descriptor for "Export".
             package static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "opentelemetry.proto.collector.logs.v1.LogsService"),
-                method: "Export"
+                method: "Export",
+                type: .unary
             )
         }
         /// Descriptors for all methods in the "opentelemetry.proto.collector.logs.v1.LogsService" service.

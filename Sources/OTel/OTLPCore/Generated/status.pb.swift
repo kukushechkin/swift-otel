@@ -1,3 +1,6 @@
+#if !(OTLPHTTP || OTLPGRPC)
+// Empty when above trait(s) are disabled.
+#else
 // DO NOT EDIT.
 // swift-format-ignore-file
 // swiftlint:disable all
@@ -108,3 +111,4 @@ extension Google_Rpc_Status: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     return true
   }
 }
+#endif

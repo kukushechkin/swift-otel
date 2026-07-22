@@ -16,6 +16,7 @@
 #else
 import _ProfileRecorderSampleConversion
 import ProfileRecorder
+import W3CTraceContext
 internal import struct NIOCore.ByteBuffer
 
 extension RangeReplaceableCollection {
@@ -50,6 +51,16 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
 
     var resultForSwiftOTel: Opentelemetry_Proto_Profiles_V1development_ProfilesData = .init()
 
+    init() {
+        seedStringTableZero()
+    }
+
+    // Required by spec: "string_table[0] MUST be \"\" and present." Must claim index 0 before any other
+    // string is interned, so this runs at construction and after every `reset()`.
+    private func seedStringTableZero() {
+        _ = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "", "")
+    }
+
     fileprivate func reset() {
         self.functionTable.removeAll(keepingCapacity: true)
         self.stringTable.removeAll(keepingCapacity: true)
@@ -57,6 +68,7 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
         self.stackTable.removeAll(keepingCapacity: true)
         self.dictionary = .init()
         self.samples = .init()
+        seedStringTableZero()
     }
 
     func consumeSingleSample(
@@ -77,7 +89,7 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
                         // TODO: last parameter closure to avoid computing if already present
                         stack.locationIndices.append(Int32(dictionary.locationTable.appendIfNotPresent(indexTable: &locationTable, key: frame.address, .with { location in
                             location.address = UInt64(frame.address)
-                            location.line.append(.with { line in
+                            location.lines.append(.with { line in
                                 line.functionIndex = Int32(dictionary.functionTable.appendIfNotPresent(indexTable: &functionTable, key: frame.functionName, .with { function in
                                     function.nameStrindex = Int32(dictionary.stringTable.appendIfNotPresent(
                                         indexTable: &stringTable,
@@ -113,19 +125,22 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
     ) throws -> ByteBuffer {
         let samplesID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "samples", "samples")
         let countID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "count", "count")
-        let cpuID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "cpuID", "cpuID")
+        // Per spec doc comment on `period_type`: "the kind of events between sampled occurrences, e.g ['cpu','cycles']
+        // or ['heap','bytes']." Pyroscope derives its profile-type `__name__` label from this string, so it must
+        // match a recognized convention -- "cpuID" did not.
+        let cpuID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "cpu", "cpu")
         let nanosecondsID = dictionary.stringTable.appendIfNotPresent(indexTable: &stringTable, key: "nanoseconds", "nanoseconds")
 
-        // `Location.mapping_index` is optional and we never set it, which the OTel spec allows ("can be unset if
-        // the mapping is unknown or not applicable"). However, at least Pyroscope's OTLP converter dereferences
-        // an unset `mapping_index` as if it were `0` rather than treating it as absent, and fails the whole
-        // export with "could not access mapping: index 0 out of bounds" if `mapping_table` is empty. Since the
-        // spec only mandates a placeholder for `string_table[0]` (not `mapping_table[0]`), this is arguably a
-        // consumer-side bug, but we need to work around it to interoperate with that consumer today.
+        // The vendored proto (v1.7.0) only required a zero-value placeholder at `string_table[0]`, so this used to
+        // be a Pyroscope-specific workaround for an unset `mapping_index` being dereferenced as index 0. As of
+        // v1.11.0 the spec has since caught up and formalized this for every dictionary table: "The element at
+        // index 0 MUST be the zero value for the dictionary's element type... This allows for _index fields
+        // pointing into the dictionary to use a 0 pointer value to indicate 'null' / 'not set'." So this is no
+        // longer a workaround -- it's a real spec requirement we were previously missing.
         dictionary.mappingTable.append(.init())
 
         let profile = Opentelemetry_Proto_Profiles_V1development_Profile.with { profile in
-            profile.sample = samples
+            profile.samples = samples
 
             profile.sampleType = .with {
                 $0.typeStrindex = Int32(samplesID)
@@ -135,12 +150,18 @@ final class OTLPProfileSampleRenderer: ProfileRecorderSampleConversionOutputRend
                 $0.typeStrindex = Int32(cpuID)
                 $0.unitStrindex = Int32(nanosecondsID)
             }
+            // Must be non-zero: consumers such as Pyroscope only look at `periodType` when `period != 0`,
+            // and otherwise fail to derive a profile-type name from the sample/period type strings at all.
+            profile.period = Int64(sampleConfiguration.microSecondsBetweenSamples) * 1000
 
             profile.timeUnixNano =
                 (UInt64(sampleConfiguration.currentTimeSeconds) * 1_000_000_000)
                     + UInt64(sampleConfiguration.currentTimeNanoseconds)
             profile.durationNano =
                 UInt64(sampleConfiguration.sampleCount) * UInt64(sampleConfiguration.microSecondsBetweenSamples) * 1000
+            // Required by spec: "all zeroes is considered invalid." TraceID is also a random 16-byte value, so
+            // reuse it rather than hand-rolling another random-bytes generator.
+            profile.profileID = TraceID.random().data
         }
 
         self.resultForSwiftOTel = .with { profilesData in

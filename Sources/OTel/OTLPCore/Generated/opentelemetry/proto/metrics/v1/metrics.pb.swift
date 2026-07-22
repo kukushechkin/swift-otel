@@ -247,11 +247,11 @@ package struct Opentelemetry_Proto_Metrics_V1_ResourceMetrics: Sendable {
   /// The resource for the metrics in this message.
   /// If this field is not set then no resource info is known.
   package var resource: Opentelemetry_Proto_Resource_V1_Resource {
-    get {return _resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
+    get {_resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
     set {_resource = newValue}
   }
   /// Returns true if `resource` has been explicitly set.
-  package var hasResource: Bool {return self._resource != nil}
+  package var hasResource: Bool {self._resource != nil}
   /// Clears the value of `resource`. Subsequent reads from it will return its default value.
   package mutating func clearResource() {self._resource = nil}
 
@@ -283,11 +283,11 @@ package struct Opentelemetry_Proto_Metrics_V1_ScopeMetrics: Sendable {
   /// Semantically when InstrumentationScope isn't set, it is equivalent with
   /// an empty instrumentation scope name (unknown).
   package var scope: Opentelemetry_Proto_Common_V1_InstrumentationScope {
-    get {return _scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
+    get {_scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
     set {_scope = newValue}
   }
   /// Returns true if `scope` has been explicitly set.
-  package var hasScope: Bool {return self._scope != nil}
+  package var hasScope: Bool {self._scope != nil}
   /// Clears the value of `scope`. Subsequent reads from it will return its default value.
   package mutating func clearScope() {self._scope = nil}
 
@@ -298,7 +298,8 @@ package struct Opentelemetry_Proto_Metrics_V1_ScopeMetrics: Sendable {
   /// is recorded in. Notably, the last part of the URL path is the version number of the
   /// schema: http[s]://server[:port]/path/<version>. To learn more about Schema URL see
   /// https://opentelemetry.io/docs/specs/otel/schemas/#schema-url
-  /// This schema_url applies to all metrics in the "metrics" field.
+  /// This schema_url applies to the data in the "scope" field and all metrics in the
+  /// "metrics" field.
   package var schemaURL: String = String()
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -397,14 +398,14 @@ package struct Opentelemetry_Proto_Metrics_V1_Metric: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// name of the metric.
+  /// The name of the metric.
   package var name: String = String()
 
-  /// description of the metric, which can be used in documentation.
+  /// A description of the metric, which can be used in documentation.
   package var description_p: String = String()
 
-  /// unit in which the metric value is reported. Follows the format
-  /// described by https://unitsofmeasure.org/ucum.html.
+  /// The unit in which the metric value is reported. Follows the format
+  /// described by https://ucum.org/ucum and https://units-of-measurement.org/ 
   package var unit: String = String()
 
   /// Data determines the aggregation type (if any) of the metric, what is the
@@ -459,6 +460,7 @@ package struct Opentelemetry_Proto_Metrics_V1_Metric: Sendable {
   /// for lossless roundtrip translation to / from another data model.
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var metadata: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -492,6 +494,8 @@ package struct Opentelemetry_Proto_Metrics_V1_Gauge: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The time series data points.
+  /// Note: Multiple time series may be included (same timestamp, different attributes).
   package var dataPoints: [Opentelemetry_Proto_Metrics_V1_NumberDataPoint] = []
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -506,13 +510,15 @@ package struct Opentelemetry_Proto_Metrics_V1_Sum: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The time series data points.
+  /// Note: Multiple time series may be included (same timestamp, different attributes).
   package var dataPoints: [Opentelemetry_Proto_Metrics_V1_NumberDataPoint] = []
 
   /// aggregation_temporality describes if the aggregator reports delta changes
   /// since last report time, or cumulative changes since a fixed start time.
   package var aggregationTemporality: Opentelemetry_Proto_Metrics_V1_AggregationTemporality = .unspecified
 
-  /// If "true" means that the sum is monotonic.
+  /// Represents whether the sum is monotonic.
   package var isMonotonic: Bool = false
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -527,6 +533,8 @@ package struct Opentelemetry_Proto_Metrics_V1_Histogram: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The time series data points.
+  /// Note: Multiple time series may be included (same timestamp, different attributes).
   package var dataPoints: [Opentelemetry_Proto_Metrics_V1_HistogramDataPoint] = []
 
   /// aggregation_temporality describes if the aggregator reports delta changes
@@ -545,6 +553,8 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogram: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The time series data points.
+  /// Note: Multiple time series may be included (same timestamp, different attributes).
   package var dataPoints: [Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint] = []
 
   /// aggregation_temporality describes if the aggregator reports delta changes
@@ -570,6 +580,8 @@ package struct Opentelemetry_Proto_Metrics_V1_Summary: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The time series data points.
+  /// Note: Multiple time series may be included (same timestamp, different attributes).
   package var dataPoints: [Opentelemetry_Proto_Metrics_V1_SummaryDataPoint] = []
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -588,16 +600,7 @@ package struct Opentelemetry_Proto_Metrics_V1_NumberDataPoint: Sendable {
   /// where this point belongs. The list may be empty (may contain 0 elements).
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
-  ///
-  /// The attribute values SHOULD NOT contain empty values.
-  /// The attribute values SHOULD NOT contain bytes values.
-  /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  /// double values.
-  /// The attribute values SHOULD NOT contain kvlist values.
-  /// The behavior of software that receives attributes containing such values can be unpredictable.
-  /// These restrictions can change in a minor release.
-  /// The restrictions take origin from the OpenTelemetry specification:
-  /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   /// StartTimeUnixNano is optional but strongly encouraged, see the
@@ -673,16 +676,7 @@ package struct Opentelemetry_Proto_Metrics_V1_HistogramDataPoint: Sendable {
   /// where this point belongs. The list may be empty (may contain 0 elements).
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
-  ///
-  /// The attribute values SHOULD NOT contain empty values.
-  /// The attribute values SHOULD NOT contain bytes values.
-  /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  /// double values.
-  /// The attribute values SHOULD NOT contain kvlist values.
-  /// The behavior of software that receives attributes containing such values can be unpredictable.
-  /// These restrictions can change in a minor release.
-  /// The restrictions take origin from the OpenTelemetry specification:
-  /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   /// StartTimeUnixNano is optional but strongly encouraged, see the
@@ -712,11 +706,11 @@ package struct Opentelemetry_Proto_Metrics_V1_HistogramDataPoint: Sendable {
   /// doing so.  This is specifically to enforce compatibility w/ OpenMetrics,
   /// see: https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#histogram
   package var sum: Double {
-    get {return _sum ?? 0}
+    get {_sum ?? 0}
     set {_sum = newValue}
   }
   /// Returns true if `sum` has been explicitly set.
-  package var hasSum: Bool {return self._sum != nil}
+  package var hasSum: Bool {self._sum != nil}
   /// Clears the value of `sum`. Subsequent reads from it will return its default value.
   package mutating func clearSum() {self._sum = nil}
 
@@ -759,21 +753,21 @@ package struct Opentelemetry_Proto_Metrics_V1_HistogramDataPoint: Sendable {
 
   /// min is the minimum value over (start_time, end_time].
   package var min: Double {
-    get {return _min ?? 0}
+    get {_min ?? 0}
     set {_min = newValue}
   }
   /// Returns true if `min` has been explicitly set.
-  package var hasMin: Bool {return self._min != nil}
+  package var hasMin: Bool {self._min != nil}
   /// Clears the value of `min`. Subsequent reads from it will return its default value.
   package mutating func clearMin() {self._min = nil}
 
   /// max is the maximum value over (start_time, end_time].
   package var max: Double {
-    get {return _max ?? 0}
+    get {_max ?? 0}
     set {_max = newValue}
   }
   /// Returns true if `max` has been explicitly set.
-  package var hasMax: Bool {return self._max != nil}
+  package var hasMax: Bool {self._max != nil}
   /// Clears the value of `max`. Subsequent reads from it will return its default value.
   package mutating func clearMax() {self._max = nil}
 
@@ -799,16 +793,7 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
   /// where this point belongs. The list may be empty (may contain 0 elements).
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
-  ///
-  /// The attribute values SHOULD NOT contain empty values.
-  /// The attribute values SHOULD NOT contain bytes values.
-  /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  /// double values.
-  /// The attribute values SHOULD NOT contain kvlist values.
-  /// The behavior of software that receives attributes containing such values can be unpredictable.
-  /// These restrictions can change in a minor release.
-  /// The restrictions take origin from the OpenTelemetry specification:
-  /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   /// StartTimeUnixNano is optional but strongly encouraged, see the
@@ -824,12 +809,12 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
   /// 1970.
   package var timeUnixNano: UInt64 = 0
 
-  /// count is the number of values in the population. Must be
+  /// The number of values in the population. Must be
   /// non-negative. This value must be equal to the sum of the "bucket_counts"
   /// values in the positive and negative Buckets plus the "zero_count" field.
   package var count: UInt64 = 0
 
-  /// sum of the values in the population. If count is zero then this field
+  /// The sum of the values in the population. If count is zero then this field
   /// must be zero.
   ///
   /// Note: Sum should only be filled out when measuring non-negative discrete
@@ -838,11 +823,11 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
   /// doing so.  This is specifically to enforce compatibility w/ OpenMetrics,
   /// see: https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#histogram
   package var sum: Double {
-    get {return _sum ?? 0}
+    get {_sum ?? 0}
     set {_sum = newValue}
   }
   /// Returns true if `sum` has been explicitly set.
-  package var hasSum: Bool {return self._sum != nil}
+  package var hasSum: Bool {self._sum != nil}
   /// Clears the value of `sum`. Subsequent reads from it will return its default value.
   package mutating func clearSum() {self._sum = nil}
 
@@ -863,7 +848,7 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
   /// values depend on the range of the data.
   package var scale: Int32 = 0
 
-  /// zero_count is the count of values that are either exactly zero or
+  /// The count of values that are either exactly zero or
   /// within the region considered zero by the instrumentation at the
   /// tolerated degree of precision.  This bucket stores values that
   /// cannot be expressed using the standard exponential formula as
@@ -875,21 +860,21 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
 
   /// positive carries the positive range of exponential bucket counts.
   package var positive: Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint.Buckets {
-    get {return _positive ?? Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint.Buckets()}
+    get {_positive ?? Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint.Buckets()}
     set {_positive = newValue}
   }
   /// Returns true if `positive` has been explicitly set.
-  package var hasPositive: Bool {return self._positive != nil}
+  package var hasPositive: Bool {self._positive != nil}
   /// Clears the value of `positive`. Subsequent reads from it will return its default value.
   package mutating func clearPositive() {self._positive = nil}
 
   /// negative carries the negative range of exponential bucket counts.
   package var negative: Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint.Buckets {
-    get {return _negative ?? Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint.Buckets()}
+    get {_negative ?? Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint.Buckets()}
     set {_negative = newValue}
   }
   /// Returns true if `negative` has been explicitly set.
-  package var hasNegative: Bool {return self._negative != nil}
+  package var hasNegative: Bool {self._negative != nil}
   /// Clears the value of `negative`. Subsequent reads from it will return its default value.
   package mutating func clearNegative() {self._negative = nil}
 
@@ -901,23 +886,23 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
   /// measurements that were used to form the data point
   package var exemplars: [Opentelemetry_Proto_Metrics_V1_Exemplar] = []
 
-  /// min is the minimum value over (start_time, end_time].
+  /// The minimum value over (start_time, end_time].
   package var min: Double {
-    get {return _min ?? 0}
+    get {_min ?? 0}
     set {_min = newValue}
   }
   /// Returns true if `min` has been explicitly set.
-  package var hasMin: Bool {return self._min != nil}
+  package var hasMin: Bool {self._min != nil}
   /// Clears the value of `min`. Subsequent reads from it will return its default value.
   package mutating func clearMin() {self._min = nil}
 
-  /// max is the maximum value over (start_time, end_time].
+  /// The maximum value over (start_time, end_time].
   package var max: Double {
-    get {return _max ?? 0}
+    get {_max ?? 0}
     set {_max = newValue}
   }
   /// Returns true if `max` has been explicitly set.
-  package var hasMax: Bool {return self._max != nil}
+  package var hasMax: Bool {self._max != nil}
   /// Clears the value of `max`. Subsequent reads from it will return its default value.
   package mutating func clearMax() {self._max = nil}
 
@@ -938,12 +923,12 @@ package struct Opentelemetry_Proto_Metrics_V1_ExponentialHistogramDataPoint: Sen
     // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
     // methods supported on all messages.
 
-    /// Offset is the bucket index of the first entry in the bucket_counts array.
+    /// The bucket index of the first entry in the bucket_counts array.
     ///
     /// Note: This uses a varint encoding as a simple form of compression.
     package var offset: Int32 = 0
 
-    /// bucket_counts is an array of count values, where bucket_counts[i] carries
+    /// An array of count values, where bucket_counts[i] carries
     /// the count of the bucket at index (offset+i). bucket_counts[i] is the count
     /// of values greater than base^(offset+i) and less than or equal to
     /// base^(offset+i+1).
@@ -980,16 +965,7 @@ package struct Opentelemetry_Proto_Metrics_V1_SummaryDataPoint: Sendable {
   /// where this point belongs. The list may be empty (may contain 0 elements).
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
-  ///
-  /// The attribute values SHOULD NOT contain empty values.
-  /// The attribute values SHOULD NOT contain bytes values.
-  /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  /// double values.
-  /// The attribute values SHOULD NOT contain kvlist values.
-  /// The behavior of software that receives attributes containing such values can be unpredictable.
-  /// These restrictions can change in a minor release.
-  /// The restrictions take origin from the OpenTelemetry specification:
-  /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   /// StartTimeUnixNano is optional but strongly encouraged, see the

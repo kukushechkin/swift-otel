@@ -42,7 +42,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
   typealias Version = _2
 }
 
-/// AnyValue is used to represent any type of attribute value. AnyValue may contain a
+/// Represents any type of attribute value. AnyValue may contain a
 /// primitive value such as a string or integer or it may contain an arbitrary nested
 /// object containing arrays, key-value lists and primitives.
 package struct Opentelemetry_Proto_Common_V1_AnyValue: Sendable {
@@ -110,6 +110,24 @@ package struct Opentelemetry_Proto_Common_V1_AnyValue: Sendable {
     set {value = .bytesValue(newValue)}
   }
 
+  /// Reference to the string value in ProfilesDictionary.string_table.
+  ///
+  /// Note: This is currently used exclusively in the Profiling signal.
+  /// Implementers of OTLP receivers for signals other than Profiling should
+  /// treat the presence of this value as a non-fatal issue.
+  /// Log an error or warning indicating an unexpected field intended for the
+  /// Profiling signal and process the data as if this value were absent or
+  /// empty, ignoring its semantic content for the non-Profiling signal.
+  ///
+  /// Status: [Alpha]
+  package var stringValueStrindex: Int32 {
+    get {
+      if case .stringValueStrindex(let v)? = value {return v}
+      return 0
+    }
+    set {value = .stringValueStrindex(newValue)}
+  }
+
   package var unknownFields = SwiftProtobuf.UnknownStorage()
 
   /// The value is one of the listed fields. It is valid for all values to be unspecified
@@ -122,6 +140,17 @@ package struct Opentelemetry_Proto_Common_V1_AnyValue: Sendable {
     case arrayValue(Opentelemetry_Proto_Common_V1_ArrayValue)
     case kvlistValue(Opentelemetry_Proto_Common_V1_KeyValueList)
     case bytesValue(Data)
+    /// Reference to the string value in ProfilesDictionary.string_table.
+    ///
+    /// Note: This is currently used exclusively in the Profiling signal.
+    /// Implementers of OTLP receivers for signals other than Profiling should
+    /// treat the presence of this value as a non-fatal issue.
+    /// Log an error or warning indicating an unexpected field intended for the
+    /// Profiling signal and process the data as if this value were absent or
+    /// empty, ignoring its semantic content for the non-Profiling signal.
+    ///
+    /// Status: [Alpha]
+    case stringValueStrindex(Int32)
 
   }
 
@@ -155,8 +184,10 @@ package struct Opentelemetry_Proto_Common_V1_KeyValueList: Sendable {
 
   /// A collection of key/value pairs of key-value pairs. The list may be empty (may
   /// contain 0 elements).
+  ///
   /// The keys MUST be unique (it is not allowed to have more than one
   /// value with the same key).
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var values: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -164,23 +195,39 @@ package struct Opentelemetry_Proto_Common_V1_KeyValueList: Sendable {
   package init() {}
 }
 
-/// KeyValue is a key-value pair that is used to store Span attributes, Link
+/// Represents a key-value pair that is used to store Span attributes, Link
 /// attributes, etc.
 package struct Opentelemetry_Proto_Common_V1_KeyValue: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The key name of the pair.
+  /// key_strindex MUST NOT be set if key is used.
   package var key: String = String()
 
+  /// The value of the pair.
   package var value: Opentelemetry_Proto_Common_V1_AnyValue {
-    get {return _value ?? Opentelemetry_Proto_Common_V1_AnyValue()}
+    get {_value ?? Opentelemetry_Proto_Common_V1_AnyValue()}
     set {_value = newValue}
   }
   /// Returns true if `value` has been explicitly set.
-  package var hasValue: Bool {return self._value != nil}
+  package var hasValue: Bool {self._value != nil}
   /// Clears the value of `value`. Subsequent reads from it will return its default value.
   package mutating func clearValue() {self._value = nil}
+
+  /// Reference to the string key in ProfilesDictionary.string_table.
+  /// key MUST NOT be set if key_strindex is used.
+  ///
+  /// Note: This is currently used exclusively in the Profiling signal.
+  /// Implementers of OTLP receivers for signals other than Profiling should
+  /// treat the presence of this key as a non-fatal issue.
+  /// Log an error or warning indicating an unexpected field intended for the
+  /// Profiling signal and process the data as if this value were absent or
+  /// empty, ignoring its semantic content for the non-Profiling signal.
+  ///
+  /// Status: [Alpha]
+  package var keyStrindex: Int32 = 0
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -196,16 +243,23 @@ package struct Opentelemetry_Proto_Common_V1_InstrumentationScope: Sendable {
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// A name denoting the Instrumentation scope.
   /// An empty instrumentation scope name means the name is unknown.
   package var name: String = String()
 
+  /// Defines the version of the instrumentation scope.
+  /// An empty instrumentation scope version means the version is unknown.
   package var version: String = String()
 
   /// Additional attributes that describe the scope. [Optional].
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
+  /// The number of attributes that were discarded. Attributes
+  /// can be discarded because their keys are too long or because there are too many
+  /// attributes. If this value is 0, then no attributes were dropped.
   package var droppedAttributesCount: UInt32 = 0
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -261,7 +315,7 @@ fileprivate let _protobuf_package = "opentelemetry.proto.common.v1"
 
 extension Opentelemetry_Proto_Common_V1_AnyValue: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".AnyValue"
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}string_value\0\u{3}bool_value\0\u{3}int_value\0\u{3}double_value\0\u{3}array_value\0\u{3}kvlist_value\0\u{3}bytes_value\0")
+  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}string_value\0\u{3}bool_value\0\u{3}int_value\0\u{3}double_value\0\u{3}array_value\0\u{3}kvlist_value\0\u{3}bytes_value\0\u{3}string_value_strindex\0")
 
   package mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -335,6 +389,14 @@ extension Opentelemetry_Proto_Common_V1_AnyValue: SwiftProtobuf.Message, SwiftPr
           self.value = .bytesValue(v)
         }
       }()
+      case 8: try {
+        var v: Int32?
+        try decoder.decodeSingularInt32Field(value: &v)
+        if let v = v {
+          if self.value != nil {try decoder.handleConflictingOneOf()}
+          self.value = .stringValueStrindex(v)
+        }
+      }()
       default: break
       }
     }
@@ -373,6 +435,10 @@ extension Opentelemetry_Proto_Common_V1_AnyValue: SwiftProtobuf.Message, SwiftPr
     case .bytesValue?: try {
       guard case .bytesValue(let v)? = self.value else { preconditionFailure() }
       try visitor.visitSingularBytesField(value: v, fieldNumber: 7)
+    }()
+    case .stringValueStrindex?: try {
+      guard case .stringValueStrindex(let v)? = self.value else { preconditionFailure() }
+      try visitor.visitSingularInt32Field(value: v, fieldNumber: 8)
     }()
     case nil: break
     }
@@ -448,7 +514,7 @@ extension Opentelemetry_Proto_Common_V1_KeyValueList: SwiftProtobuf.Message, Swi
 
 extension Opentelemetry_Proto_Common_V1_KeyValue: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".KeyValue"
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}key\0\u{1}value\0")
+  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}key\0\u{1}value\0\u{3}key_strindex\0")
 
   package mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -458,6 +524,7 @@ extension Opentelemetry_Proto_Common_V1_KeyValue: SwiftProtobuf.Message, SwiftPr
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularStringField(value: &self.key) }()
       case 2: try { try decoder.decodeSingularMessageField(value: &self._value) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.keyStrindex) }()
       default: break
       }
     }
@@ -474,12 +541,16 @@ extension Opentelemetry_Proto_Common_V1_KeyValue: SwiftProtobuf.Message, SwiftPr
     try { if let v = self._value {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
     } }()
+    if self.keyStrindex != 0 {
+      try visitor.visitSingularInt32Field(value: self.keyStrindex, fieldNumber: 3)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   package static func ==(lhs: Opentelemetry_Proto_Common_V1_KeyValue, rhs: Opentelemetry_Proto_Common_V1_KeyValue) -> Bool {
     if lhs.key != rhs.key {return false}
     if lhs._value != rhs._value {return false}
+    if lhs.keyStrindex != rhs.keyStrindex {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

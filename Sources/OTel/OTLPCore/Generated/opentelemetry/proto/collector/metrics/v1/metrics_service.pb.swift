@@ -75,11 +75,11 @@ package struct Opentelemetry_Proto_Collector_Metrics_V1_ExportMetricsServiceResp
   /// `error_message` = "") is equivalent to it not being set/present. Senders
   /// SHOULD interpret it the same way as in the full success case.
   package var partialSuccess: Opentelemetry_Proto_Collector_Metrics_V1_ExportMetricsPartialSuccess {
-    get {return _partialSuccess ?? Opentelemetry_Proto_Collector_Metrics_V1_ExportMetricsPartialSuccess()}
+    get {_partialSuccess ?? Opentelemetry_Proto_Collector_Metrics_V1_ExportMetricsPartialSuccess()}
     set {_partialSuccess = newValue}
   }
   /// Returns true if `partialSuccess` has been explicitly set.
-  package var hasPartialSuccess: Bool {return self._partialSuccess != nil}
+  package var hasPartialSuccess: Bool {self._partialSuccess != nil}
   /// Clears the value of `partialSuccess`. Subsequent reads from it will return its default value.
   package mutating func clearPartialSuccess() {self._partialSuccess = nil}
 

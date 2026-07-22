@@ -37,6 +37,7 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
   typealias Version = _2
 }
 
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesServiceRequest: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -51,11 +52,11 @@ package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfil
 
   /// The reference table containing all data shared by profiles across the message being sent.
   package var dictionary: Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary {
-    get {return _dictionary ?? Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary()}
+    get {_dictionary ?? Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary()}
     set {_dictionary = newValue}
   }
   /// Returns true if `dictionary` has been explicitly set.
-  package var hasDictionary: Bool {return self._dictionary != nil}
+  package var hasDictionary: Bool {self._dictionary != nil}
   /// Clears the value of `dictionary`. Subsequent reads from it will return its default value.
   package mutating func clearDictionary() {self._dictionary = nil}
 
@@ -66,6 +67,7 @@ package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfil
   fileprivate var _dictionary: Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary? = nil
 }
 
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesServiceResponse: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -87,11 +89,11 @@ package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfil
   /// `error_message` = "") is equivalent to it not being set/present. Senders
   /// SHOULD interpret it the same way as in the full success case.
   package var partialSuccess: Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesPartialSuccess {
-    get {return _partialSuccess ?? Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesPartialSuccess()}
+    get {_partialSuccess ?? Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesPartialSuccess()}
     set {_partialSuccess = newValue}
   }
   /// Returns true if `partialSuccess` has been explicitly set.
-  package var hasPartialSuccess: Bool {return self._partialSuccess != nil}
+  package var hasPartialSuccess: Bool {self._partialSuccess != nil}
   /// Clears the value of `partialSuccess`. Subsequent reads from it will return its default value.
   package mutating func clearPartialSuccess() {self._partialSuccess = nil}
 
@@ -102,6 +104,7 @@ package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfil
   fileprivate var _partialSuccess: Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesPartialSuccess? = nil
 }
 
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Collector_Profiles_V1development_ExportProfilesPartialSuccess: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for

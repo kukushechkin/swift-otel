@@ -143,11 +143,11 @@ package struct Opentelemetry_Proto_Trace_V1_ResourceSpans: Sendable {
   /// The resource for the spans in this message.
   /// If this field is not set then no resource info is known.
   package var resource: Opentelemetry_Proto_Resource_V1_Resource {
-    get {return _resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
+    get {_resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
     set {_resource = newValue}
   }
   /// Returns true if `resource` has been explicitly set.
-  package var hasResource: Bool {return self._resource != nil}
+  package var hasResource: Bool {self._resource != nil}
   /// Clears the value of `resource`. Subsequent reads from it will return its default value.
   package mutating func clearResource() {self._resource = nil}
 
@@ -179,11 +179,11 @@ package struct Opentelemetry_Proto_Trace_V1_ScopeSpans: Sendable {
   /// Semantically when InstrumentationScope isn't set, it is equivalent with
   /// an empty instrumentation scope name (unknown).
   package var scope: Opentelemetry_Proto_Common_V1_InstrumentationScope {
-    get {return _scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
+    get {_scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
     set {_scope = newValue}
   }
   /// Returns true if `scope` has been explicitly set.
-  package var hasScope: Bool {return self._scope != nil}
+  package var hasScope: Bool {self._scope != nil}
   /// Clears the value of `scope`. Subsequent reads from it will return its default value.
   package mutating func clearScope() {self._scope = nil}
 
@@ -194,7 +194,8 @@ package struct Opentelemetry_Proto_Trace_V1_ScopeSpans: Sendable {
   /// is recorded in. Notably, the last part of the URL path is the version number of the
   /// schema: http[s]://server[:port]/path/<version>. To learn more about Schema URL see
   /// https://opentelemetry.io/docs/specs/otel/schemas/#schema-url
-  /// This schema_url applies to all spans and span events in the "spans" field.
+  /// This schema_url applies to the data in the "scope" field and all spans and span
+  /// events in the "spans" field.
   package var schemaURL: String = String()
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -219,7 +220,7 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   ///
   /// This field is required.
   package var traceID: Data {
-    get {return _storage._traceID}
+    get {_storage._traceID}
     set {_uniqueStorage()._traceID = newValue}
   }
 
@@ -230,7 +231,7 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   ///
   /// This field is required.
   package var spanID: Data {
-    get {return _storage._spanID}
+    get {_storage._spanID}
     set {_uniqueStorage()._spanID = newValue}
   }
 
@@ -238,14 +239,14 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   /// It is a trace_state in w3c-trace-context format: https://www.w3.org/TR/trace-context/#tracestate-header
   /// See also https://github.com/w3c/distributed-tracing for more details about this field.
   package var traceState: String {
-    get {return _storage._traceState}
+    get {_storage._traceState}
     set {_uniqueStorage()._traceState = newValue}
   }
 
   /// The `span_id` of this span's parent span. If this is a root span, then this
   /// field must be empty. The ID is an 8-byte array.
   package var parentSpanID: Data {
-    get {return _storage._parentSpanID}
+    get {_storage._parentSpanID}
     set {_uniqueStorage()._parentSpanID = newValue}
   }
 
@@ -271,7 +272,7 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   ///
   /// [Optional].
   package var flags: UInt32 {
-    get {return _storage._flags}
+    get {_storage._flags}
     set {_uniqueStorage()._flags = newValue}
   }
 
@@ -287,7 +288,7 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   ///
   /// This field is required.
   package var name: String {
-    get {return _storage._name}
+    get {_storage._name}
     set {_uniqueStorage()._name = newValue}
   }
 
@@ -295,33 +296,33 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   /// two spans with the same name may be distinguished using `CLIENT` (caller)
   /// and `SERVER` (callee) to identify queueing latency associated with the span.
   package var kind: Opentelemetry_Proto_Trace_V1_Span.SpanKind {
-    get {return _storage._kind}
+    get {_storage._kind}
     set {_uniqueStorage()._kind = newValue}
   }
 
-  /// start_time_unix_nano is the start time of the span. On the client side, this is the time
+  /// The start time of the span. On the client side, this is the time
   /// kept by the local machine where the span execution starts. On the server side, this
   /// is the time when the server's application handler starts running.
   /// Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.
   ///
   /// This field is semantically required and it is expected that end_time >= start_time.
   package var startTimeUnixNano: UInt64 {
-    get {return _storage._startTimeUnixNano}
+    get {_storage._startTimeUnixNano}
     set {_uniqueStorage()._startTimeUnixNano = newValue}
   }
 
-  /// end_time_unix_nano is the end time of the span. On the client side, this is the time
+  /// The end time of the span. On the client side, this is the time
   /// kept by the local machine where the span execution ends. On the server side, this
   /// is the time when the server application handler stops running.
   /// Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.
   ///
   /// This field is semantically required and it is expected that end_time >= start_time.
   package var endTimeUnixNano: UInt64 {
-    get {return _storage._endTimeUnixNano}
+    get {_storage._endTimeUnixNano}
     set {_uniqueStorage()._endTimeUnixNano = newValue}
   }
 
-  /// attributes is a collection of key/value pairs. Note, global attributes
+  /// A collection of key/value pairs. Note, global attributes
   /// like server name can be set using the resource API. Examples of attributes:
   ///
   ///     "/http/user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
@@ -331,64 +332,55 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
   ///
   /// Attribute keys MUST be unique (it is not allowed to have more than one
   /// attribute with the same key).
-  ///
-  /// The attribute values SHOULD NOT contain empty values.
-  /// The attribute values SHOULD NOT contain bytes values.
-  /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  /// double values.
-  /// The attribute values SHOULD NOT contain kvlist values.
-  /// The behavior of software that receives attributes containing such values can be unpredictable.
-  /// These restrictions can change in a minor release.
-  /// The restrictions take origin from the OpenTelemetry specification:
-  /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  /// The behavior of software that receives duplicated keys can be unpredictable.
   package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] {
-    get {return _storage._attributes}
+    get {_storage._attributes}
     set {_uniqueStorage()._attributes = newValue}
   }
 
-  /// dropped_attributes_count is the number of attributes that were discarded. Attributes
+  /// The number of attributes that were discarded. Attributes
   /// can be discarded because their keys are too long or because there are too many
   /// attributes. If this value is 0, then no attributes were dropped.
   package var droppedAttributesCount: UInt32 {
-    get {return _storage._droppedAttributesCount}
+    get {_storage._droppedAttributesCount}
     set {_uniqueStorage()._droppedAttributesCount = newValue}
   }
 
-  /// events is a collection of Event items.
+  /// A collection of Event items.
   package var events: [Opentelemetry_Proto_Trace_V1_Span.Event] {
-    get {return _storage._events}
+    get {_storage._events}
     set {_uniqueStorage()._events = newValue}
   }
 
-  /// dropped_events_count is the number of dropped events. If the value is 0, then no
+  /// The number of dropped events. If the value is 0, then no
   /// events were dropped.
   package var droppedEventsCount: UInt32 {
-    get {return _storage._droppedEventsCount}
+    get {_storage._droppedEventsCount}
     set {_uniqueStorage()._droppedEventsCount = newValue}
   }
 
-  /// links is a collection of Links, which are references from this span to a span
+  /// A collection of Links, which are references from this span to a span
   /// in the same or different trace.
   package var links: [Opentelemetry_Proto_Trace_V1_Span.Link] {
-    get {return _storage._links}
+    get {_storage._links}
     set {_uniqueStorage()._links = newValue}
   }
 
-  /// dropped_links_count is the number of dropped links after the maximum size was
+  /// The number of dropped links after the maximum size was
   /// enforced. If this value is 0, then no links were dropped.
   package var droppedLinksCount: UInt32 {
-    get {return _storage._droppedLinksCount}
+    get {_storage._droppedLinksCount}
     set {_uniqueStorage()._droppedLinksCount = newValue}
   }
 
   /// An optional final status for this span. Semantically when Status isn't set, it means
   /// span's status code is unset, i.e. assume STATUS_CODE_UNSET (code = 0).
   package var status: Opentelemetry_Proto_Trace_V1_Status {
-    get {return _storage._status ?? Opentelemetry_Proto_Trace_V1_Status()}
+    get {_storage._status ?? Opentelemetry_Proto_Trace_V1_Status()}
     set {_uniqueStorage()._status = newValue}
   }
   /// Returns true if `status` has been explicitly set.
-  package var hasStatus: Bool {return _storage._status != nil}
+  package var hasStatus: Bool {_storage._status != nil}
   /// Clears the value of `status`. Subsequent reads from it will return its default value.
   package mutating func clearStatus() {_uniqueStorage()._status = nil}
 
@@ -473,29 +465,20 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
     // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
     // methods supported on all messages.
 
-    /// time_unix_nano is the time the event occurred.
+    /// The time the event occurred.
     package var timeUnixNano: UInt64 = 0
 
-    /// name of the event.
+    /// The name of the event.
     /// This field is semantically required to be set to non-empty string.
     package var name: String = String()
 
-    /// attributes is a collection of attribute key/value pairs on the event.
+    /// A collection of attribute key/value pairs on the event.
     /// Attribute keys MUST be unique (it is not allowed to have more than one
     /// attribute with the same key).
-    ///
-    /// The attribute values SHOULD NOT contain empty values.
-    /// The attribute values SHOULD NOT contain bytes values.
-    /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-    /// double values.
-    /// The attribute values SHOULD NOT contain kvlist values.
-    /// The behavior of software that receives attributes containing such values can be unpredictable.
-    /// These restrictions can change in a minor release.
-    /// The restrictions take origin from the OpenTelemetry specification:
-    /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+    /// The behavior of software that receives duplicated keys can be unpredictable.
     package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
-    /// dropped_attributes_count is the number of dropped attributes. If the value is 0,
+    /// The number of dropped attributes. If the value is 0,
     /// then no attributes were dropped.
     package var droppedAttributesCount: UInt32 = 0
 
@@ -523,22 +506,13 @@ package struct Opentelemetry_Proto_Trace_V1_Span: @unchecked Sendable {
     /// The trace_state associated with the link.
     package var traceState: String = String()
 
-    /// attributes is a collection of attribute key/value pairs on the link.
+    /// A collection of attribute key/value pairs on the link.
     /// Attribute keys MUST be unique (it is not allowed to have more than one
     /// attribute with the same key).
-    ///
-    /// The attribute values SHOULD NOT contain empty values.
-    /// The attribute values SHOULD NOT contain bytes values.
-    /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-    /// double values.
-    /// The attribute values SHOULD NOT contain kvlist values.
-    /// The behavior of software that receives attributes containing such values can be unpredictable.
-    /// These restrictions can change in a minor release.
-    /// The restrictions take origin from the OpenTelemetry specification:
-    /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+    /// The behavior of software that receives duplicated keys can be unpredictable.
     package var attributes: [Opentelemetry_Proto_Common_V1_KeyValue] = []
 
-    /// dropped_attributes_count is the number of dropped attributes. If the value is 0,
+    /// The number of dropped attributes. If the value is 0,
     /// then no attributes were dropped.
     package var droppedAttributesCount: UInt32 = 0
 

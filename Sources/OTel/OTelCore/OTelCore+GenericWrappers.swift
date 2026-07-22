@@ -385,12 +385,7 @@ internal enum WrappedProfileExporter: OTelProfileExporter {
             switch configuration.profiles.otlpExporter.protocol.backing {
             case .grpc:
                 #if OTLPGRPC
-//                if #available(gRPCSwift, *) {
-//                    let exporter = try OTLPGRPCProfileExporter(configuration: configuration.profiles.otlpExporter, logger: logger)
-//                    self = .grpc(exporter)
-//                } else {
-                fatalError("Using the OTLP/gRPC exporter is not supported on this platform.")
-//                }
+                throw NotImplementedError()
                 #else // OTLPGRPC
                 fatalError("Using the OTLP/gRPC exporter requires the `OTLPGRPC` trait enabled.")
                 #endif

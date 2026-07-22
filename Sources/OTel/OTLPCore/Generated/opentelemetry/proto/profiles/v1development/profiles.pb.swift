@@ -58,114 +58,32 @@ fileprivate struct _GeneratedWithProtocGenSwiftVersion: SwiftProtobuf.ProtobufAP
   typealias Version = _2
 }
 
-/// Specifies the method of aggregating metric values, either DELTA (change since last report)
-/// or CUMULATIVE (total since a fixed start time).
-package enum Opentelemetry_Proto_Profiles_V1development_AggregationTemporality: SwiftProtobuf.Enum, Swift.CaseIterable {
-  package typealias RawValue = Int
-
-  /// UNSPECIFIED is the default AggregationTemporality, it MUST not be used. 
-  case unspecified // = 0
-
-  ///* DELTA is an AggregationTemporality for a profiler which reports
-  ///changes since last report time. Successive metrics contain aggregation of
-  ///values from continuous and non-overlapping intervals.
-  ///
-  ///The values for a DELTA metric are based only on the time interval
-  ///associated with one measurement cycle. There is no dependency on
-  ///previous measurements like is the case for CUMULATIVE metrics.
-  ///
-  ///For example, consider a system measuring the number of requests that
-  ///it receives and reports the sum of these requests every second as a
-  ///DELTA metric:
-  ///
-  ///1. The system starts receiving at time=t_0.
-  ///2. A request is received, the system measures 1 request.
-  ///3. A request is received, the system measures 1 request.
-  ///4. A request is received, the system measures 1 request.
-  ///5. The 1 second collection cycle ends. A metric is exported for the
-  ///number of requests received over the interval of time t_0 to
-  ///t_0+1 with a value of 3.
-  ///6. A request is received, the system measures 1 request.
-  ///7. A request is received, the system measures 1 request.
-  ///8. The 1 second collection cycle ends. A metric is exported for the
-  ///number of requests received over the interval of time t_0+1 to
-  ///t_0+2 with a value of 2. 
-  case delta // = 1
-
-  ///* CUMULATIVE is an AggregationTemporality for a profiler which
-  ///reports changes since a fixed start time. This means that current values
-  ///of a CUMULATIVE metric depend on all previous measurements since the
-  ///start time. Because of this, the sender is required to retain this state
-  ///in some form. If this state is lost or invalidated, the CUMULATIVE metric
-  ///values MUST be reset and a new fixed start time following the last
-  ///reported measurement time sent MUST be used.
-  ///
-  ///For example, consider a system measuring the number of requests that
-  ///it receives and reports the sum of these requests every second as a
-  ///CUMULATIVE metric:
-  ///
-  ///1. The system starts receiving at time=t_0.
-  ///2. A request is received, the system measures 1 request.
-  ///3. A request is received, the system measures 1 request.
-  ///4. A request is received, the system measures 1 request.
-  ///5. The 1 second collection cycle ends. A metric is exported for the
-  ///number of requests received over the interval of time t_0 to
-  ///t_0+1 with a value of 3.
-  ///6. A request is received, the system measures 1 request.
-  ///7. A request is received, the system measures 1 request.
-  ///8. The 1 second collection cycle ends. A metric is exported for the
-  ///number of requests received over the interval of time t_0 to
-  ///t_0+2 with a value of 5.
-  ///9. The system experiences a fault and loses state.
-  ///10. The system recovers and resumes receiving at time=t_1.
-  ///11. A request is received, the system measures 1 request.
-  ///12. The 1 second collection cycle ends. A metric is exported for the
-  ///number of requests received over the interval of time t_1 to
-  ///t_1+1 with a value of 1.
-  ///
-  ///Note: Even though, when reporting changes since last report time, using
-  ///CUMULATIVE is valid, it is not recommended. 
-  case cumulative // = 2
-  case UNRECOGNIZED(Int)
-
-  package init() {
-    self = .unspecified
-  }
-
-  package init?(rawValue: Int) {
-    switch rawValue {
-    case 0: self = .unspecified
-    case 1: self = .delta
-    case 2: self = .cumulative
-    default: self = .UNRECOGNIZED(rawValue)
-    }
-  }
-
-  package var rawValue: Int {
-    switch self {
-    case .unspecified: return 0
-    case .delta: return 1
-    case .cumulative: return 2
-    case .UNRECOGNIZED(let i): return i
-    }
-  }
-
-  // The compiler won't synthesize support with the UNRECOGNIZED case.
-  package static let allCases: [Opentelemetry_Proto_Profiles_V1development_AggregationTemporality] = [
-    .unspecified,
-    .delta,
-    .cumulative,
-  ]
-
-}
-
-/// ProfilesDictionary represents the profiles data shared across the
-/// entire message being sent.
+/// ProfilesDictionary contains all the dictionary tables that are shared
+/// across the entire ProfilesData message.
 ///
-/// Note that all fields in this message MUST have a zero value encoded as the first element.
-/// This allows for _index fields pointing into the dictionary to use a 0 pointer value
-/// to indicate 'null' / 'not set'. Unless otherwise defined, a 'zero value' message value
-/// is one with all default field values, so as to minimize wire encoded size.
+/// The following applies to all fields in this message:
+///
+/// - A dictionary is an array of dictionary items. Users of the dictionary
+///   compactly reference the items using the index within the array.
+///
+/// - The element at index 0 MUST be the zero value for the dictionary's element
+///   type (e.g. `""` for `string_table`, `Location{}` for `location_table`). This
+///   allows for _index fields pointing into the dictionary to use a 0 pointer
+///   value to indicate 'null' / 'not set'. Unless otherwise defined, a 'zero
+///   value' message value is one with all default field values, so as to
+///   minimize wire encoded size.
+///
+/// - There SHOULD NOT be duplicate items in a dictionary. The identity of a
+///   dictionary item is based on its value, recursively as needed. If a particular
+///   implementation does emit duplicate items, it MUST NOT attempt to give them
+///   meaning based on the index or order. A profile processor MAY remove
+///   duplicates and this MUST NOT have any observable effects for consumers.
+///
+/// - There SHOULD NOT be orphaned (unreferenced) items in a dictionary. A
+///   profile processor MAY remove ("garbage-collect") orphaned items and this
+///   MUST NOT have any observable effects for consumers.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -173,42 +91,61 @@ package struct Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary: Se
 
   /// Mappings from address ranges to the image/binary/library mapped
   /// into that address range referenced by locations via Location.mapping_index.
+  ///
+  /// mapping_table[0] MUST be the zero value (Mapping{}) and present.
   package var mappingTable: [Opentelemetry_Proto_Profiles_V1development_Mapping] = []
 
   /// Locations referenced by samples via Stack.location_indices.
+  ///
+  /// location_table[0] MUST be the zero value (Location{}) and present.
   package var locationTable: [Opentelemetry_Proto_Profiles_V1development_Location] = []
 
   /// Functions referenced by locations via Line.function_index.
+  ///
+  /// function_table[0] MUST be the zero value (Function{}) and present.
   package var functionTable: [Opentelemetry_Proto_Profiles_V1development_Function] = []
 
   /// Links referenced by samples via Sample.link_index.
+  ///
+  /// link_table[0] MUST be the zero value (Link{}) and present.
+  /// Note that whilst Link{trace_id=array[0], span_id=array[0]} and
+  /// Link{trace_id=array[16], span_id=array[8]} filled with zero-value bytes
+  /// are both appropriate zero/invalid values per the trace.proto:Span definition,
+  /// the latter SHOULD be used for link_table[0] for better compatibility with codecs
+  /// strictly expecting 16/8 byte array lengths.
   package var linkTable: [Opentelemetry_Proto_Profiles_V1development_Link] = []
 
   /// A common table for strings referenced by various messages.
-  /// string_table[0] must always be "".
+  ///
+  /// string_table[0] MUST be "" and present.
   package var stringTable: [String] = []
 
-  /// A common table for attributes referenced by various messages.
-  /// It is a collection of key/value pairs. Note, global attributes
-  /// like server name can be set using the resource API. Examples of attributes:
+  /// A common table for attributes referenced by the Profile, Sample, Mapping
+  /// and Location messages, through their attribute_indices field. Each entry is
+  /// a key/value pair with an optional unit in UCUM format. Since this is a
+  /// dictionary table, multiple entries with the same key MAY be present,
+  /// unlike direct attribute tables like Resource.attributes.
+  /// However, the referencing attribute_indices fields MUST maintain the key
+  /// uniqueness requirement.
   ///
+  /// It's recommended to use attributes for variables with bounded cardinality,
+  /// such as categorical variables
+  /// (https://en.wikipedia.org/wiki/Categorical_variable). Using an attribute of
+  /// a floating point type (e.g., CPU time) in a sample can quickly make every
+  /// attribute value unique, defeating the purpose of the dictionary and
+  /// impractically increasing the profile size.
+  ///
+  /// Examples of attributes:
   ///     "/http/user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
-  ///     "/http/server_latency": 300
   ///     "abc.com/myattribute": true
-  ///     "abc.com/score": 10.239
+  ///     "allocation_size": 128 bytes
   ///
-  /// The attribute values SHOULD NOT contain empty values.
-  /// The attribute values SHOULD NOT contain bytes values.
-  /// The attribute values SHOULD NOT contain array values different than array of string values, bool values, int values,
-  /// double values.
-  /// The attribute values SHOULD NOT contain kvlist values.
-  /// The behavior of software that receives attributes containing such values can be unpredictable.
-  /// These restrictions can change in a minor release.
-  /// The restrictions take origin from the OpenTelemetry specification:
-  /// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.47.0/specification/common/README.md#attribute.
+  /// attribute_table[0] MUST be the zero value (KeyValueAndUnit{}) and present.
   package var attributeTable: [Opentelemetry_Proto_Profiles_V1development_KeyValueAndUnit] = []
 
   /// Stacks referenced by samples via Sample.stack_index.
+  ///
+  /// stack_table[0] MUST be the zero value (Stack{}) and present.
   package var stackTable: [Opentelemetry_Proto_Profiles_V1development_Stack] = []
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -226,6 +163,8 @@ package struct Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary: Se
 ///
 /// When new fields are added into this message, the OTLP request MUST be updated
 /// as well.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_ProfilesData: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -238,17 +177,17 @@ package struct Opentelemetry_Proto_Profiles_V1development_ProfilesData: Sendable
   /// from non-containerized processes.
   /// Other resource groupings are possible as well and clarified via
   /// Resource.attributes and semantic conventions.
-  /// Tools that visualize profiles should prefer displaying
+  /// Tools that visualize profiles SHOULD prefer displaying
   /// resources_profiles[0].scope_profiles[0].profiles[0] by default.
   package var resourceProfiles: [Opentelemetry_Proto_Profiles_V1development_ResourceProfiles] = []
 
-  /// One instance of ProfilesDictionary
+  /// A single instance of ProfilesDictionary shared across the entire message.
   package var dictionary: Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary {
-    get {return _dictionary ?? Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary()}
+    get {_dictionary ?? Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary()}
     set {_dictionary = newValue}
   }
   /// Returns true if `dictionary` has been explicitly set.
-  package var hasDictionary: Bool {return self._dictionary != nil}
+  package var hasDictionary: Bool {self._dictionary != nil}
   /// Clears the value of `dictionary`. Subsequent reads from it will return its default value.
   package mutating func clearDictionary() {self._dictionary = nil}
 
@@ -260,6 +199,8 @@ package struct Opentelemetry_Proto_Profiles_V1development_ProfilesData: Sendable
 }
 
 /// A collection of ScopeProfiles from a Resource.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_ResourceProfiles: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -268,15 +209,15 @@ package struct Opentelemetry_Proto_Profiles_V1development_ResourceProfiles: Send
   /// The resource for the profiles in this message.
   /// If this field is not set then no resource info is known.
   package var resource: Opentelemetry_Proto_Resource_V1_Resource {
-    get {return _resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
+    get {_resource ?? Opentelemetry_Proto_Resource_V1_Resource()}
     set {_resource = newValue}
   }
   /// Returns true if `resource` has been explicitly set.
-  package var hasResource: Bool {return self._resource != nil}
+  package var hasResource: Bool {self._resource != nil}
   /// Clears the value of `resource`. Subsequent reads from it will return its default value.
   package mutating func clearResource() {self._resource = nil}
 
-  /// A list of ScopeProfiles that originate from a resource.
+  /// A list of ScopeProfiles that originate from this resource.
   package var scopeProfiles: [Opentelemetry_Proto_Profiles_V1development_ScopeProfiles] = []
 
   /// The Schema URL, if known. This is the identifier of the Schema that the resource data
@@ -284,7 +225,7 @@ package struct Opentelemetry_Proto_Profiles_V1development_ResourceProfiles: Send
   /// schema: http[s]://server[:port]/path/<version>. To learn more about Schema URL see
   /// https://opentelemetry.io/docs/specs/otel/schemas/#schema-url
   /// This schema_url applies to the data in the "resource" field. It does not apply
-  /// to the data in the "scope_profiles" field which have their own schema_url field.
+  /// to the data in the "scope_profiles" field, which has its own schema_url field.
   package var schemaURL: String = String()
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -295,6 +236,8 @@ package struct Opentelemetry_Proto_Profiles_V1development_ResourceProfiles: Send
 }
 
 /// A collection of Profiles produced by an InstrumentationScope.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_ScopeProfiles: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -304,22 +247,23 @@ package struct Opentelemetry_Proto_Profiles_V1development_ScopeProfiles: Sendabl
   /// Semantically when InstrumentationScope isn't set, it is equivalent with
   /// an empty instrumentation scope name (unknown).
   package var scope: Opentelemetry_Proto_Common_V1_InstrumentationScope {
-    get {return _scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
+    get {_scope ?? Opentelemetry_Proto_Common_V1_InstrumentationScope()}
     set {_scope = newValue}
   }
   /// Returns true if `scope` has been explicitly set.
-  package var hasScope: Bool {return self._scope != nil}
+  package var hasScope: Bool {self._scope != nil}
   /// Clears the value of `scope`. Subsequent reads from it will return its default value.
   package mutating func clearScope() {self._scope = nil}
 
-  /// A list of Profiles that originate from an instrumentation scope.
+  /// A list of Profiles that originate from this instrumentation scope.
   package var profiles: [Opentelemetry_Proto_Profiles_V1development_Profile] = []
 
   /// The Schema URL, if known. This is the identifier of the Schema that the profile data
   /// is recorded in. Notably, the last part of the URL path is the version number of the
   /// schema: http[s]://server[:port]/path/<version>. To learn more about Schema URL see
   /// https://opentelemetry.io/docs/specs/otel/schemas/#schema-url
-  /// This schema_url applies to all profiles in the "profiles" field.
+  /// This schema_url applies to the data in the "scope" field and all profiles in the
+  /// "profiles" field.
   package var schemaURL: String = String()
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -334,9 +278,7 @@ package struct Opentelemetry_Proto_Profiles_V1development_ScopeProfiles: Sendabl
 /// metadata. It modifies and annotates pprof Profile with OpenTelemetry
 /// specific fields.
 ///
-/// Note that whilst fields in this message retain the name and field id from pprof in most cases
-/// for ease of understanding data migration, it is not intended that pprof:Profile and
-/// OpenTelemetry:Profile encoding be wire compatible.
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Profile: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -348,66 +290,82 @@ package struct Opentelemetry_Proto_Profiles_V1development_Profile: Sendable {
   /// For a heap profile, this might be:
   ///   ["allocated_objects","count"] or ["allocated_space","bytes"],
   package var sampleType: Opentelemetry_Proto_Profiles_V1development_ValueType {
-    get {return _sampleType ?? Opentelemetry_Proto_Profiles_V1development_ValueType()}
+    get {_sampleType ?? Opentelemetry_Proto_Profiles_V1development_ValueType()}
     set {_sampleType = newValue}
   }
   /// Returns true if `sampleType` has been explicitly set.
-  package var hasSampleType: Bool {return self._sampleType != nil}
+  package var hasSampleType: Bool {self._sampleType != nil}
   /// Clears the value of `sampleType`. Subsequent reads from it will return its default value.
   package mutating func clearSampleType() {self._sampleType = nil}
 
   /// The set of samples recorded in this profile.
-  package var sample: [Opentelemetry_Proto_Profiles_V1development_Sample] = []
+  package var samples: [Opentelemetry_Proto_Profiles_V1development_Sample] = []
 
-  /// Time of collection (UTC) represented as nanoseconds past the epoch.
+  /// Time of collection (UTC) as nanoseconds since the UNIX epoch.
   package var timeUnixNano: UInt64 = 0
 
-  /// Duration of the profile, if a duration makes sense.
+  /// Duration of the profile in nanoseconds. For instant profiles like
+  /// live heap snapshot, the duration can be zero but it may be preferable
+  /// to set time_unix_nano to the process start time and duration_nano to
+  /// the relative time when the profile was gathered so that Sample.timestamps_unix_nano
+  /// values fall within the profile time range.
   package var durationNano: UInt64 = 0
 
-  /// The kind of events between sampled occurrences.
-  /// e.g [ "cpu","cycles" ] or [ "heap","bytes" ]
+  /// The type and the unit of the events between sampled occurrences for
+  /// periodic sampling profiles. It can be the same as sample_type or it can be
+  /// different depending on the case, for example:
+  /// - sample_type=(cpu, milliseconds), period_type=(cpu, milliseconds),
+  ///   period=10 signals that we sample the program every 10 milliseconds and
+  ///   capture samples that each represent that sampling distance.
+  /// - sample_type=(off_cpu, nanoseconds), period_type=(context_switch, count),
+  ///   period=1000 describes a profile where sampling is done every so often in
+  ///   terms of context switches, but the recorded metric is the time spent by
+  ///   the thread off CPU.
+  /// - sample_type=(inuse_space, bytes), period_type=(allocated_bytes, bytes),
+  ///   period=262144 might represent a heap profile where the recorded sample
+  ///   metric is the size of the live heap while the periodic sampling is done
+  ///   using the number of cumulatively allocated bytes.
   package var periodType: Opentelemetry_Proto_Profiles_V1development_ValueType {
-    get {return _periodType ?? Opentelemetry_Proto_Profiles_V1development_ValueType()}
+    get {_periodType ?? Opentelemetry_Proto_Profiles_V1development_ValueType()}
     set {_periodType = newValue}
   }
   /// Returns true if `periodType` has been explicitly set.
-  package var hasPeriodType: Bool {return self._periodType != nil}
+  package var hasPeriodType: Bool {self._periodType != nil}
   /// Clears the value of `periodType`. Subsequent reads from it will return its default value.
   package mutating func clearPeriodType() {self._periodType = nil}
 
-  /// The number of events between sampled occurrences.
+  /// The distance between sampled occurrences for periodic sampling profiles.
+  /// The value is of the period_type type and unit.
   package var period: Int64 = 0
 
-  /// Free-form text associated with the profile. The text is displayed as is
-  /// to the user by the tools that read profiles (e.g. by pprof). This field
-  /// should not be used to store any machine-readable information, it is only
-  /// for human-friendly content. The profile must stay functional if this field
-  /// is cleaned.
-  package var commentStrindices: [Int32] = []
-
   /// A globally unique identifier for a profile. The ID is a 16-byte array. An ID with
-  /// all zeroes is considered invalid. It may be used for deduplication and signal
+  /// all zeroes is considered invalid. It MAY be used for deduplication and signal
   /// correlation purposes. It is acceptable to treat two profiles with different values
   /// in this field as not equal, even if they represented the same object at an earlier
   /// time.
   /// This field is optional; an ID may be assigned to an ID-less profile in a later step.
   package var profileID: Data = Data()
 
-  /// dropped_attributes_count is the number of attributes that were discarded. Attributes
+  /// The number of attributes that were discarded. Attributes
   /// can be discarded because their keys are too long or because there are too many
   /// attributes. If this value is 0, then no attributes were dropped.
   package var droppedAttributesCount: UInt32 = 0
 
-  /// Specifies format of the original payload. Common values are defined in semantic conventions. [required if original_payload is present]
+  /// The original payload format. See also original_payload. It MUST be set
+  /// together with original_payload or both left unset [optional].
+  ///
+  /// The allowed values for the format string are defined by the OpenTelemetry
+  /// specification. Some examples are "jfr", "pprof", "linux_perf".
+  ///
+  /// The original_payload MAY be used when converting from a source format (e.g. JFR)
+  /// that carries information which cannot be losslessly represented in the
+  /// Profiles format. Including the original data allows receivers to store or
+  /// reexport the data without loss. Because the original payload can be large,
+  /// its inclusion is optional.
   package var originalPayloadFormat: String = String()
 
-  /// Original payload can be stored in this field. This can be useful for users who want to get the original payload.
-  /// Formats such as JFR are highly extensible and can contain more information than what is defined in this spec.
-  /// Inclusion of original payload should be configurable by the user. Default behavior should be to not include the original payload.
-  /// If the original payload is in pprof format, it SHOULD not be included in this field.
-  /// The field is optional, however if it is present then equivalent converted data should be populated in other fields
-  /// of this message as far as is practicable.
+  /// The original payload bytes. See also original_payload_format. It MUST be set
+  /// together with original_payload_format or both left unset [optional].
   package var originalPayload: Data = Data()
 
   /// References to attributes in attribute_table. [optional]
@@ -423,12 +381,14 @@ package struct Opentelemetry_Proto_Profiles_V1development_Profile: Sendable {
 
 /// A pointer from a profile Sample to a trace Span.
 /// Connects a profile sample to a trace span, identified by unique trace and span IDs.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Link: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// A unique identifier of a trace that this linked span is part of. The ID is a
+  /// A unique identifier of the trace that this linked span is part of. The ID is a
   /// 16-byte array.
   package var traceID: Data = Data()
 
@@ -440,7 +400,9 @@ package struct Opentelemetry_Proto_Profiles_V1development_Link: Sendable {
   package init() {}
 }
 
-/// ValueType describes the type and units of a value, with an optional aggregation temporality.
+/// ValueType describes the type and units of a value.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_ValueType: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -452,8 +414,6 @@ package struct Opentelemetry_Proto_Profiles_V1development_ValueType: Sendable {
   /// Index into ProfilesDictionary.string_table.
   package var unitStrindex: Int32 = 0
 
-  package var aggregationTemporality: Opentelemetry_Proto_Profiles_V1development_AggregationTemporality = .unspecified
-
   package var unknownFields = SwiftProtobuf.UnknownStorage()
 
   package init() {}
@@ -464,23 +424,33 @@ package struct Opentelemetry_Proto_Profiles_V1development_ValueType: Sendable {
 /// information like the thread-id, some indicator of a higher level request
 /// being handled etc.
 ///
-/// A Sample MUST have have at least one values or timestamps_unix_nano entry. If
-/// both fields are populated, they MUST contain the same number of elements, and
-/// the elements at the same index MUST refer to the same event.
+/// A Sample MUST have have at least one entry in values or timestamps_unix_nano.
+/// If both fields are populated, they MUST contain the same number of elements,
+/// and the elements at the same index MUST refer to the same event.
 ///
-/// Examples of different ways of representing a sample with the total value of 10:
+/// For the purposes of efficiently representing aggregated data observations, a Sample is regarded
+/// as having a shared identity and an associated collection of per-observation data points.
+/// A Sample's identity (i.e. primary key) is the tuple of {stack_index, set_of(attribute_indices), link_index}.
+/// Samples having the same identity SHOULD be combined by appending timestamps and values to the data arrays.
 ///
-/// Report of a stacktrace at 10 timestamps (consumers must assume the value is 1 for each point):
+/// Examples of different ways ('shapes') of representing a sample with the total value of 10:
+///
+/// Timestamps only (consumers must assume the value is 1 for each timestamp):
 ///    values: []
 ///    timestamps_unix_nano: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 ///
-/// Report of a stacktrace with an aggregated value without timestamps:
-///   values: [10]
+/// Single aggregated value without timestamps (one element representing the total):
+///    values: [10]
 ///    timestamps_unix_nano: []
 ///
-/// Report of a stacktrace at 4 timestamps where each point records a specific value:
+/// Per-timestamp value (each point in time records a specific value):
 ///    values: [2, 2, 3, 3]
 ///    timestamps_unix_nano: [1, 2, 3, 4]
+///
+/// All Samples for a Profile SHOULD have the same shape, i.e. all data observation series should consistently
+/// adopt the same data recording style.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Sample: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -489,18 +459,18 @@ package struct Opentelemetry_Proto_Profiles_V1development_Sample: Sendable {
   /// Reference to stack in ProfilesDictionary.stack_table.
   package var stackIndex: Int32 = 0
 
-  /// The type and unit of each value is defined by Profile.sample_type.
-  package var values: [Int64] = []
-
   /// References to attributes in ProfilesDictionary.attribute_table. [optional]
   package var attributeIndices: [Int32] = []
 
   /// Reference to link in ProfilesDictionary.link_table. [optional]
-  /// It can be unset / set to 0 if no link exists, as link_table[0] is always a 'null' default value.
+  /// 0 means no link exists.
   package var linkIndex: Int32 = 0
 
-  /// Timestamps associated with Sample represented in nanoseconds. These
-  /// timestamps should fall within the Profile's time range.
+  /// Measured values. The type and unit of each value is defined by Profile.sample_type.
+  package var values: [Int64] = []
+
+  /// Timestamps (UTC) as nanoseconds since the UNIX epoch. The timestamps SHOULD fall within the
+  /// [Profile.time_unix_nano, Profile.time_unix_nano + Profile.duration_nano) interval.
   package var timestampsUnixNano: [UInt64] = []
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -510,6 +480,8 @@ package struct Opentelemetry_Proto_Profiles_V1development_Sample: Sendable {
 
 /// Describes the mapping of a binary in memory, including its address range,
 /// file offset, and metadata like build ID
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Mapping: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -525,8 +497,8 @@ package struct Opentelemetry_Proto_Profiles_V1development_Mapping: Sendable {
   package var fileOffset: UInt64 = 0
 
   /// The object this entry is loaded from.  This can be a filename on
-  /// disk for the main binary and shared libraries, or virtual
-  /// abstractions like "[vdso]".
+  /// disk for the main binary and shared libraries, or a virtual
+  /// abstraction like "[vdso]".
   package var filenameStrindex: Int32 = 0
 
   /// References to attributes in ProfilesDictionary.attribute_table. [optional]
@@ -537,7 +509,13 @@ package struct Opentelemetry_Proto_Profiles_V1development_Mapping: Sendable {
   package init() {}
 }
 
-/// A Stack represents a stack trace as a list of locations.
+/// A Stack represents a stack trace as a list of locations (leaf first).
+/// For example, the stack trace resulting from the call stack
+/// main -> foo -> bar would be encoded into the location_indices list
+/// [2, 1, 0] which references the locations in location_table as:
+/// [Location{"main"}, Location{"foo"}, Location{"bar"}].
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Stack: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -552,32 +530,33 @@ package struct Opentelemetry_Proto_Profiles_V1development_Stack: Sendable {
   package init() {}
 }
 
-/// Describes function and line table debug information.
+/// Contains function and line table debug information for a single frame.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Location: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
   /// Reference to mapping in ProfilesDictionary.mapping_table.
-  /// It can be unset / set to 0 if the mapping is unknown or not applicable for
-  /// this profile type, as mapping_table[0] is always a 'null' default mapping.
+  /// 0 means unknown or not applicable.
   package var mappingIndex: Int32 = 0
 
   /// The instruction address for this location, if available.  It
-  /// should be within [Mapping.memory_start...Mapping.memory_limit]
+  /// SHOULD be within [Mapping.memory_start, Mapping.memory_limit]
   /// for the corresponding mapping. A non-leaf address may be in the
   /// middle of a call instruction. It is up to display tools to find
   /// the beginning of the instruction if necessary.
   package var address: UInt64 = 0
 
-  /// Multiple line indicates this location has inlined functions,
+  /// Multiple lines indicate this location has inlined functions,
   /// where the last entry represents the caller into which the
   /// preceding entries were inlined.
   ///
   /// E.g., if memcpy() is inlined into printf:
-  ///    line[0].function_name == "memcpy"
-  ///    line[1].function_name == "printf"
-  package var line: [Opentelemetry_Proto_Profiles_V1development_Line] = []
+  ///    lines[0].function_name == "memcpy"
+  ///    lines[1].function_name == "printf"
+  package var lines: [Opentelemetry_Proto_Profiles_V1development_Line] = []
 
   /// References to attributes in ProfilesDictionary.attribute_table. [optional]
   package var attributeIndices: [Int32] = []
@@ -588,6 +567,8 @@ package struct Opentelemetry_Proto_Profiles_V1development_Location: Sendable {
 }
 
 /// Details a specific line in a source code, linked to a function.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Line: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -596,10 +577,10 @@ package struct Opentelemetry_Proto_Profiles_V1development_Line: Sendable {
   /// Reference to function in ProfilesDictionary.function_table.
   package var functionIndex: Int32 = 0
 
-  /// Line number in source code. 0 means unset.
+  /// Line number in source code. 1-based, 0 means unset.
   package var line: Int64 = 0
 
-  /// Column number in source code. 0 means unset.
+  /// Column number in source code. 1-based, 0 means unset.
   package var column: Int64 = 0
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -608,13 +589,16 @@ package struct Opentelemetry_Proto_Profiles_V1development_Line: Sendable {
 }
 
 /// Describes a function, including its human-readable name, system name,
-/// source file, and starting line number in the source.
+/// source file, and starting line number in the source.  At least one of
+/// {name_strindex, system_name_strindex, filename_strindex} MUST be present.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_Function: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  /// Function name. Empty string if not available.
+  /// The function name. Empty string if not available.
   package var nameStrindex: Int32 = 0
 
   /// Function name, as identified by the system. For instance,
@@ -624,7 +608,7 @@ package struct Opentelemetry_Proto_Profiles_V1development_Function: Sendable {
   /// Source file containing the function. Empty string if not available.
   package var filenameStrindex: Int32 = 0
 
-  /// Line number in source file. 0 means unset.
+  /// Line number in source file. 1-based, 0 means unset.
   package var startLine: Int64 = 0
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -634,24 +618,31 @@ package struct Opentelemetry_Proto_Profiles_V1development_Function: Sendable {
 
 /// A custom 'dictionary native' style of encoding attributes which is more convenient
 /// for profiles than opentelemetry.proto.common.v1.KeyValue
-/// Specifically, uses the string table for keys and allows optional unit information.
+/// Specifically, uses the ProfilesDictionary.string_table for keys
+/// and allows optional unit information.
+///
+/// Status: [Alpha]
 package struct Opentelemetry_Proto_Profiles_V1development_KeyValueAndUnit: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
+  /// The index into the string table for the attribute's key.
   package var keyStrindex: Int32 = 0
 
+  /// The value of the attribute.
   package var value: Opentelemetry_Proto_Common_V1_AnyValue {
-    get {return _value ?? Opentelemetry_Proto_Common_V1_AnyValue()}
+    get {_value ?? Opentelemetry_Proto_Common_V1_AnyValue()}
     set {_value = newValue}
   }
   /// Returns true if `value` has been explicitly set.
-  package var hasValue: Bool {return self._value != nil}
+  package var hasValue: Bool {self._value != nil}
   /// Clears the value of `value`. Subsequent reads from it will return its default value.
   package mutating func clearValue() {self._value = nil}
 
+  /// The index into the string table for the attribute's unit.
   /// zero indicates implicit (by semconv) or non-defined unit.
+  /// If present, the unit string SHOULD be in UCUM format.
   package var unitStrindex: Int32 = 0
 
   package var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -664,10 +655,6 @@ package struct Opentelemetry_Proto_Profiles_V1development_KeyValueAndUnit: Senda
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "opentelemetry.proto.profiles.v1development"
-
-extension Opentelemetry_Proto_Profiles_V1development_AggregationTemporality: SwiftProtobuf._ProtoNameProviding {
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0AGGREGATION_TEMPORALITY_UNSPECIFIED\0\u{1}AGGREGATION_TEMPORALITY_DELTA\0\u{1}AGGREGATION_TEMPORALITY_CUMULATIVE\0")
-}
 
 extension Opentelemetry_Proto_Profiles_V1development_ProfilesDictionary: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".ProfilesDictionary"
@@ -858,7 +845,7 @@ extension Opentelemetry_Proto_Profiles_V1development_ScopeProfiles: SwiftProtobu
 
 extension Opentelemetry_Proto_Profiles_V1development_Profile: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".Profile"
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}sample_type\0\u{1}sample\0\u{3}time_unix_nano\0\u{3}duration_nano\0\u{3}period_type\0\u{1}period\0\u{3}comment_strindices\0\u{3}profile_id\0\u{3}dropped_attributes_count\0\u{3}original_payload_format\0\u{3}original_payload\0\u{3}attribute_indices\0")
+  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}sample_type\0\u{1}samples\0\u{3}time_unix_nano\0\u{3}duration_nano\0\u{3}period_type\0\u{1}period\0\u{3}profile_id\0\u{3}dropped_attributes_count\0\u{3}original_payload_format\0\u{3}original_payload\0\u{3}attribute_indices\0")
 
   package mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -867,17 +854,16 @@ extension Opentelemetry_Proto_Profiles_V1development_Profile: SwiftProtobuf.Mess
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularMessageField(value: &self._sampleType) }()
-      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.sample) }()
+      case 2: try { try decoder.decodeRepeatedMessageField(value: &self.samples) }()
       case 3: try { try decoder.decodeSingularFixed64Field(value: &self.timeUnixNano) }()
       case 4: try { try decoder.decodeSingularUInt64Field(value: &self.durationNano) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._periodType) }()
       case 6: try { try decoder.decodeSingularInt64Field(value: &self.period) }()
-      case 7: try { try decoder.decodeRepeatedInt32Field(value: &self.commentStrindices) }()
-      case 8: try { try decoder.decodeSingularBytesField(value: &self.profileID) }()
-      case 9: try { try decoder.decodeSingularUInt32Field(value: &self.droppedAttributesCount) }()
-      case 10: try { try decoder.decodeSingularStringField(value: &self.originalPayloadFormat) }()
-      case 11: try { try decoder.decodeSingularBytesField(value: &self.originalPayload) }()
-      case 12: try { try decoder.decodeRepeatedInt32Field(value: &self.attributeIndices) }()
+      case 7: try { try decoder.decodeSingularBytesField(value: &self.profileID) }()
+      case 8: try { try decoder.decodeSingularUInt32Field(value: &self.droppedAttributesCount) }()
+      case 9: try { try decoder.decodeSingularStringField(value: &self.originalPayloadFormat) }()
+      case 10: try { try decoder.decodeSingularBytesField(value: &self.originalPayload) }()
+      case 11: try { try decoder.decodeRepeatedInt32Field(value: &self.attributeIndices) }()
       default: break
       }
     }
@@ -891,8 +877,8 @@ extension Opentelemetry_Proto_Profiles_V1development_Profile: SwiftProtobuf.Mess
     try { if let v = self._sampleType {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
     } }()
-    if !self.sample.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.sample, fieldNumber: 2)
+    if !self.samples.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.samples, fieldNumber: 2)
     }
     if self.timeUnixNano != 0 {
       try visitor.visitSingularFixed64Field(value: self.timeUnixNano, fieldNumber: 3)
@@ -906,35 +892,31 @@ extension Opentelemetry_Proto_Profiles_V1development_Profile: SwiftProtobuf.Mess
     if self.period != 0 {
       try visitor.visitSingularInt64Field(value: self.period, fieldNumber: 6)
     }
-    if !self.commentStrindices.isEmpty {
-      try visitor.visitPackedInt32Field(value: self.commentStrindices, fieldNumber: 7)
-    }
     if !self.profileID.isEmpty {
-      try visitor.visitSingularBytesField(value: self.profileID, fieldNumber: 8)
+      try visitor.visitSingularBytesField(value: self.profileID, fieldNumber: 7)
     }
     if self.droppedAttributesCount != 0 {
-      try visitor.visitSingularUInt32Field(value: self.droppedAttributesCount, fieldNumber: 9)
+      try visitor.visitSingularUInt32Field(value: self.droppedAttributesCount, fieldNumber: 8)
     }
     if !self.originalPayloadFormat.isEmpty {
-      try visitor.visitSingularStringField(value: self.originalPayloadFormat, fieldNumber: 10)
+      try visitor.visitSingularStringField(value: self.originalPayloadFormat, fieldNumber: 9)
     }
     if !self.originalPayload.isEmpty {
-      try visitor.visitSingularBytesField(value: self.originalPayload, fieldNumber: 11)
+      try visitor.visitSingularBytesField(value: self.originalPayload, fieldNumber: 10)
     }
     if !self.attributeIndices.isEmpty {
-      try visitor.visitPackedInt32Field(value: self.attributeIndices, fieldNumber: 12)
+      try visitor.visitPackedInt32Field(value: self.attributeIndices, fieldNumber: 11)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   package static func ==(lhs: Opentelemetry_Proto_Profiles_V1development_Profile, rhs: Opentelemetry_Proto_Profiles_V1development_Profile) -> Bool {
     if lhs._sampleType != rhs._sampleType {return false}
-    if lhs.sample != rhs.sample {return false}
+    if lhs.samples != rhs.samples {return false}
     if lhs.timeUnixNano != rhs.timeUnixNano {return false}
     if lhs.durationNano != rhs.durationNano {return false}
     if lhs._periodType != rhs._periodType {return false}
     if lhs.period != rhs.period {return false}
-    if lhs.commentStrindices != rhs.commentStrindices {return false}
     if lhs.profileID != rhs.profileID {return false}
     if lhs.droppedAttributesCount != rhs.droppedAttributesCount {return false}
     if lhs.originalPayloadFormat != rhs.originalPayloadFormat {return false}
@@ -982,7 +964,7 @@ extension Opentelemetry_Proto_Profiles_V1development_Link: SwiftProtobuf.Message
 
 extension Opentelemetry_Proto_Profiles_V1development_ValueType: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".ValueType"
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}type_strindex\0\u{3}unit_strindex\0\u{3}aggregation_temporality\0")
+  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}type_strindex\0\u{3}unit_strindex\0")
 
   package mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -992,7 +974,6 @@ extension Opentelemetry_Proto_Profiles_V1development_ValueType: SwiftProtobuf.Me
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.typeStrindex) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.unitStrindex) }()
-      case 3: try { try decoder.decodeSingularEnumField(value: &self.aggregationTemporality) }()
       default: break
       }
     }
@@ -1005,16 +986,12 @@ extension Opentelemetry_Proto_Profiles_V1development_ValueType: SwiftProtobuf.Me
     if self.unitStrindex != 0 {
       try visitor.visitSingularInt32Field(value: self.unitStrindex, fieldNumber: 2)
     }
-    if self.aggregationTemporality != .unspecified {
-      try visitor.visitSingularEnumField(value: self.aggregationTemporality, fieldNumber: 3)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   package static func ==(lhs: Opentelemetry_Proto_Profiles_V1development_ValueType, rhs: Opentelemetry_Proto_Profiles_V1development_ValueType) -> Bool {
     if lhs.typeStrindex != rhs.typeStrindex {return false}
     if lhs.unitStrindex != rhs.unitStrindex {return false}
-    if lhs.aggregationTemporality != rhs.aggregationTemporality {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -1022,7 +999,7 @@ extension Opentelemetry_Proto_Profiles_V1development_ValueType: SwiftProtobuf.Me
 
 extension Opentelemetry_Proto_Profiles_V1development_Sample: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".Sample"
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}stack_index\0\u{1}values\0\u{3}attribute_indices\0\u{3}link_index\0\u{3}timestamps_unix_nano\0")
+  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}stack_index\0\u{3}attribute_indices\0\u{3}link_index\0\u{1}values\0\u{3}timestamps_unix_nano\0")
 
   package mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1031,9 +1008,9 @@ extension Opentelemetry_Proto_Profiles_V1development_Sample: SwiftProtobuf.Messa
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.stackIndex) }()
-      case 2: try { try decoder.decodeRepeatedInt64Field(value: &self.values) }()
-      case 3: try { try decoder.decodeRepeatedInt32Field(value: &self.attributeIndices) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.linkIndex) }()
+      case 2: try { try decoder.decodeRepeatedInt32Field(value: &self.attributeIndices) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.linkIndex) }()
+      case 4: try { try decoder.decodeRepeatedInt64Field(value: &self.values) }()
       case 5: try { try decoder.decodeRepeatedFixed64Field(value: &self.timestampsUnixNano) }()
       default: break
       }
@@ -1044,14 +1021,14 @@ extension Opentelemetry_Proto_Profiles_V1development_Sample: SwiftProtobuf.Messa
     if self.stackIndex != 0 {
       try visitor.visitSingularInt32Field(value: self.stackIndex, fieldNumber: 1)
     }
-    if !self.values.isEmpty {
-      try visitor.visitPackedInt64Field(value: self.values, fieldNumber: 2)
-    }
     if !self.attributeIndices.isEmpty {
-      try visitor.visitPackedInt32Field(value: self.attributeIndices, fieldNumber: 3)
+      try visitor.visitPackedInt32Field(value: self.attributeIndices, fieldNumber: 2)
     }
     if self.linkIndex != 0 {
-      try visitor.visitSingularInt32Field(value: self.linkIndex, fieldNumber: 4)
+      try visitor.visitSingularInt32Field(value: self.linkIndex, fieldNumber: 3)
+    }
+    if !self.values.isEmpty {
+      try visitor.visitPackedInt64Field(value: self.values, fieldNumber: 4)
     }
     if !self.timestampsUnixNano.isEmpty {
       try visitor.visitPackedFixed64Field(value: self.timestampsUnixNano, fieldNumber: 5)
@@ -1061,9 +1038,9 @@ extension Opentelemetry_Proto_Profiles_V1development_Sample: SwiftProtobuf.Messa
 
   package static func ==(lhs: Opentelemetry_Proto_Profiles_V1development_Sample, rhs: Opentelemetry_Proto_Profiles_V1development_Sample) -> Bool {
     if lhs.stackIndex != rhs.stackIndex {return false}
-    if lhs.values != rhs.values {return false}
     if lhs.attributeIndices != rhs.attributeIndices {return false}
     if lhs.linkIndex != rhs.linkIndex {return false}
+    if lhs.values != rhs.values {return false}
     if lhs.timestampsUnixNano != rhs.timestampsUnixNano {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -1152,7 +1129,7 @@ extension Opentelemetry_Proto_Profiles_V1development_Stack: SwiftProtobuf.Messag
 
 extension Opentelemetry_Proto_Profiles_V1development_Location: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   package static let protoMessageName: String = _protobuf_package + ".Location"
-  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}mapping_index\0\u{1}address\0\u{1}line\0\u{3}attribute_indices\0")
+  package static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}mapping_index\0\u{1}address\0\u{1}lines\0\u{3}attribute_indices\0")
 
   package mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -1162,7 +1139,7 @@ extension Opentelemetry_Proto_Profiles_V1development_Location: SwiftProtobuf.Mes
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.mappingIndex) }()
       case 2: try { try decoder.decodeSingularUInt64Field(value: &self.address) }()
-      case 3: try { try decoder.decodeRepeatedMessageField(value: &self.line) }()
+      case 3: try { try decoder.decodeRepeatedMessageField(value: &self.lines) }()
       case 4: try { try decoder.decodeRepeatedInt32Field(value: &self.attributeIndices) }()
       default: break
       }
@@ -1176,8 +1153,8 @@ extension Opentelemetry_Proto_Profiles_V1development_Location: SwiftProtobuf.Mes
     if self.address != 0 {
       try visitor.visitSingularUInt64Field(value: self.address, fieldNumber: 2)
     }
-    if !self.line.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.line, fieldNumber: 3)
+    if !self.lines.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.lines, fieldNumber: 3)
     }
     if !self.attributeIndices.isEmpty {
       try visitor.visitPackedInt32Field(value: self.attributeIndices, fieldNumber: 4)
@@ -1188,7 +1165,7 @@ extension Opentelemetry_Proto_Profiles_V1development_Location: SwiftProtobuf.Mes
   package static func ==(lhs: Opentelemetry_Proto_Profiles_V1development_Location, rhs: Opentelemetry_Proto_Profiles_V1development_Location) -> Bool {
     if lhs.mappingIndex != rhs.mappingIndex {return false}
     if lhs.address != rhs.address {return false}
-    if lhs.line != rhs.line {return false}
+    if lhs.lines != rhs.lines {return false}
     if lhs.attributeIndices != rhs.attributeIndices {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true

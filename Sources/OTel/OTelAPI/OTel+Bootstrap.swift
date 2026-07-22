@@ -146,7 +146,9 @@ extension OTel {
             #if Profiling
             try services.append(bootstrapProfiles(resolvedConfiguration: configuration, logger: logger))
             #else
-            fatalError("Using continuous profiling requires the `Profiling` trait enabled.")
+            throw OTel.Configuration.Error.invalidConfiguration(
+                "bootstrap called but config has profiles enabled without the `Profiling` trait enabled"
+            )
             #endif
         }
         if services.isEmpty {

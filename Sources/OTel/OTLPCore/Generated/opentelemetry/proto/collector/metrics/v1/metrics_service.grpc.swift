@@ -32,13 +32,13 @@ internal import GRPCProtobuf
 
 /// Namespace containing generated types for the "opentelemetry.proto.collector.metrics.v1.MetricsService" service.
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-package enum Opentelemetry_Proto_Collector_Metrics_V1_MetricsService {
+package enum Opentelemetry_Proto_Collector_Metrics_V1_MetricsService: Sendable {
     /// Service descriptor for the "opentelemetry.proto.collector.metrics.v1.MetricsService" service.
     package static let descriptor = GRPCCore.ServiceDescriptor(fullyQualifiedService: "opentelemetry.proto.collector.metrics.v1.MetricsService")
     /// Namespace for method metadata.
-    package enum Method {
+    package enum Method: Sendable {
         /// Namespace for "Export" metadata.
-        package enum Export {
+        package enum Export: Sendable {
             /// Request type for "Export".
             package typealias Input = Opentelemetry_Proto_Collector_Metrics_V1_ExportMetricsServiceRequest
             /// Response type for "Export".
@@ -46,7 +46,8 @@ package enum Opentelemetry_Proto_Collector_Metrics_V1_MetricsService {
             /// Descriptor for "Export".
             package static let descriptor = GRPCCore.MethodDescriptor(
                 service: GRPCCore.ServiceDescriptor(fullyQualifiedService: "opentelemetry.proto.collector.metrics.v1.MetricsService"),
-                method: "Export"
+                method: "Export",
+                type: .unary
             )
         }
         /// Descriptors for all methods in the "opentelemetry.proto.collector.metrics.v1.MetricsService" service.
