@@ -118,8 +118,6 @@ extension OTelTracer: Service {
     }
 }
 
-private let noOpSpan = OTelSpan.noOp(NoOpTracer.NoOpSpan(context: .topLevel))
-
 extension OTelTracer: Tracer {
     func startSpan(
         _ operationName: String,
@@ -131,7 +129,9 @@ extension OTelTracer: Tracer {
         line: UInt
     ) -> OTelSpan {
         // Fast-path for constant sampler.
-        if case .constant(let sampler) = sampler, sampler.decision == .drop { return noOpSpan }
+        if case .constant(let sampler) = sampler, sampler.decision == .drop {
+            return OTelSpan.noOp(NoOpTracer.NoOpSpan(context: context()))
+        }
 
         let parentContext = context()
 
@@ -154,24 +154,26 @@ extension OTelTracer: Tracer {
             parentContext: parentContext
         )
 
+        // The SpanContext is created the same way regardless of the sampling decision: only whether the span is
+        // recorded/exported depends on the decision, not whether its context is valid and propagatable downstream.
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/sdk.md#sampling
+        let spanID = idGenerator.nextSpanID()
+        let traceFlags: TraceFlags = samplingResult.decision == .recordAndSample ? .sampled : []
+        let spanContext = OTelSpanContext.local(
+            traceID: traceID,
+            spanID: spanID,
+            parentSpanID: parentContext.spanContext?.spanID,
+            traceFlags: traceFlags,
+            traceState: traceState
+        )
+        var childContext = parentContext
+        childContext.spanContext = spanContext
+
         switch samplingResult.decision {
         case .drop:
-            return noOpSpan
+            return OTelSpan.noOp(NoOpTracer.NoOpSpan(context: childContext))
 
         case .record, .recordAndSample:
-            let spanID = idGenerator.nextSpanID()
-            var childContext = parentContext
-
-            let traceFlags: TraceFlags = samplingResult.decision == .recordAndSample ? .sampled : []
-            let spanContext = OTelSpanContext.local(
-                traceID: traceID,
-                spanID: spanID,
-                parentSpanID: parentContext.spanContext?.spanID,
-                traceFlags: traceFlags,
-                traceState: traceState
-            )
-            childContext.spanContext = spanContext
-
             let recordingSpan = OTelSpan.recording(
                 operationName: operationName,
                 kind: kind,

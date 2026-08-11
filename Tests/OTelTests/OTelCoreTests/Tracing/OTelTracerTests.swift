@@ -145,6 +145,49 @@ final class OTelTracerTests: XCTestCase {
         XCTAssertNil(span.context.spanContext)
     }
 
+    func test_startSpan_whenDynamicSamplerDrops_propagatesSpanContext() throws {
+        let idGenerator = OTelConstantIDGenerator(traceID: .oneToSixteen, spanID: .oneToEight)
+        let sampler = OTelInlineSampler { _, _, _, _, _, _ in .init(decision: .drop) }
+        let propagator = OTelW3CPropagator()
+        let processor = OTelNoOpSpanProcessor()
+
+        let tracer = OTelTracer(
+            idGenerator: idGenerator,
+            sampler: .other(sampler),
+            propagator: propagator,
+            processor: processor,
+            resource: OTelResource()
+        )
+
+        let randomIDGenerator = OTelRandomIDGenerator()
+        let traceID = randomIDGenerator.nextTraceID()
+        let parentSpanID = randomIDGenerator.nextSpanID()
+        let traceState = TraceState([(.simple("foo"), "bar")])
+
+        var parentContext = ServiceContext.topLevel
+        parentContext.spanContext = OTelSpanContext.remoteStub(
+            traceID: traceID,
+            spanID: parentSpanID,
+            traceFlags: .sampled,
+            traceState: traceState
+        )
+
+        let span = tracer.startSpan("test", context: parentContext)
+        XCTAssertFalse(span.isRecording)
+
+        let spanContext = try XCTUnwrap(span.context.spanContext)
+        XCTAssertEqual(
+            spanContext,
+            .local(
+                traceID: traceID,
+                spanID: .oneToEight,
+                parentSpanID: parentSpanID,
+                traceFlags: [],
+                traceState: traceState
+            )
+        )
+    }
+
     func test_startSpan_onSpanEnd_whenSpanIsSampled_forwardsSpanToProcessor() async throws {
         let idGenerator = OTelRandomIDGenerator()
         let sampler = OTelConstantSampler(isOn: true)
@@ -399,7 +442,7 @@ final class OTelTracerTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(batch).map(\.operationName), ["test"])
     }
 
-    func test_startSpan_whenSamplerIsConstantOff_doesNotCallAnything() async throws {
+    func test_startSpan_whenSamplerIsConstantOff_skipsSamplingAndIDGenerationButPropagatesContext() async throws {
         struct TestFailingConformer: OTelIDGenerator, OTelSampler, OTelPropagator, OTelSpanProcessor, OTelSpanExporter {
             func nextTraceID() -> TraceID {
                 XCTFail()
@@ -435,11 +478,6 @@ final class OTelTracerTests: XCTestCase {
 
             func run() async throws { XCTFail() }
 
-            var context: ServiceContext {
-                XCTFail()
-                return .topLevel
-            }
-
             var instant: StubInstant {
                 XCTFail()
                 return .constant(42)
@@ -454,9 +492,17 @@ final class OTelTracerTests: XCTestCase {
             resource: OTelResource()
         )
 
+        var upstreamContext = ServiceContext.topLevel
+        upstreamContext.spanContext = OTelSpanContext.remoteStub(
+            traceID: .oneToSixteen,
+            spanID: .oneToEight,
+            traceFlags: .sampled,
+            traceState: TraceState()
+        )
+
         let span = tracer.startSpan(
             "thing",
-            context: testFailingConformer.context,
+            context: upstreamContext,
             ofKind: .internal,
             at: testFailingConformer.instant,
             function: #function,
@@ -464,7 +510,8 @@ final class OTelTracerTests: XCTestCase {
             line: #line
         )
         XCTAssertFalse(span.isRecording)
-        XCTAssertNil(span.context.spanContext)
+
+        XCTAssertEqual(span.context.spanContext, upstreamContext.spanContext)
     }
 }
 
