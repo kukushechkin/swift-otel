@@ -116,7 +116,12 @@ extension OTel {
         try Self.bootstrap(configuration: configuration, environment: ProcessInfo.processInfo.environment)
     }
 
-    package static func bootstrap(configuration: Configuration = .default, environment: [String: String]) throws -> some Service {
+    /// Bootstrap observability backends with OTLP exporters, reading the process environment from a user-provided
+    /// dictionary rather than the process environment.
+    ///
+    /// - SeeAlso:
+    ///   - ``bootstrap(configuration:)`` for a description of the bootstrapped OTel backends.
+    public static func bootstrap(configuration: Configuration = .default, environment: [String: String]) throws -> some Service {
         let logger = configuration.makeDiagnosticLogger().withMetadata(component: "bootstrap")
         var configuration = configuration
         if configuration.logs.disabled, configuration.metrics.disabled, configuration.traces.disabled {
