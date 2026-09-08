@@ -128,11 +128,6 @@ extension OTelTracer: Tracer {
         file fileID: String,
         line: UInt
     ) -> OTelSpan {
-        // Fast-path for constant sampler.
-        if case .constant(let sampler) = sampler, sampler.decision == .drop {
-            return OTelSpan.noOp(NoOpTracer.NoOpSpan(context: context()))
-        }
-
         let parentContext = context()
 
         let traceID: TraceID
@@ -154,9 +149,9 @@ extension OTelTracer: Tracer {
             parentContext: parentContext
         )
 
-        // The SpanContext is created the same way regardless of the sampling decision: only whether the span is
-        // recorded/exported depends on the decision, not whether its context is valid and propagatable downstream.
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/sdk.md#sampling
+        // A span ID is generated independently of the sampling decision, even for a dropped/non-recording span:
+        // other components (such as log correlation) rely on a unique span ID regardless of whether it's recorded.
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sdk-span-creation
         let spanID = idGenerator.nextSpanID()
         let traceFlags: TraceFlags = samplingResult.decision == .recordAndSample ? .sampled : []
         let spanContext = OTelSpanContext.local(
