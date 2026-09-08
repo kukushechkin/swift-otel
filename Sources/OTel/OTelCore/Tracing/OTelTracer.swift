@@ -140,20 +140,31 @@ extension OTelTracer: Tracer {
             traceState = TraceState()
         }
 
-        let samplingResult = sampler.samplingResult(
-            operationName: operationName,
-            kind: kind,
-            traceID: traceID,
-            attributes: [:],
-            links: [],
-            parentContext: parentContext
-        )
+        // A constant sampler's decision doesn't depend on any of the arguments, so its algorithm never needs
+        // to run at all; only a pluggable sampler's `samplingResult` is actually worth calling.
+        let decision: OTelSamplingResult.Decision
+        let attributes: SpanAttributes
+        if case .constant(let constantSampler) = sampler {
+            decision = constantSampler.decision
+            attributes = [:]
+        } else {
+            let samplingResult = sampler.samplingResult(
+                operationName: operationName,
+                kind: kind,
+                traceID: traceID,
+                attributes: [:],
+                links: [],
+                parentContext: parentContext
+            )
+            decision = samplingResult.decision
+            attributes = samplingResult.attributes
+        }
 
         // A span ID is generated independently of the sampling decision, even for a dropped/non-recording span:
         // other components (such as log correlation) rely on a unique span ID regardless of whether it's recorded.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sdk-span-creation
         let spanID = idGenerator.nextSpanID()
-        let traceFlags: TraceFlags = samplingResult.decision == .recordAndSample ? .sampled : []
+        let traceFlags: TraceFlags = decision == .recordAndSample ? .sampled : []
         let spanContext = OTelSpanContext.local(
             traceID: traceID,
             spanID: spanID,
@@ -164,7 +175,7 @@ extension OTelTracer: Tracer {
         var childContext = parentContext
         childContext.spanContext = spanContext
 
-        switch samplingResult.decision {
+        switch decision {
         case .drop:
             return OTelSpan.noOp(NoOpTracer.NoOpSpan(context: childContext))
 
@@ -174,7 +185,7 @@ extension OTelTracer: Tracer {
                 kind: kind,
                 context: childContext,
                 spanContext: spanContext,
-                attributes: samplingResult.attributes,
+                attributes: attributes,
                 startTimeNanosecondsSinceEpoch: instant().nanosecondsSinceEpoch,
                 onEnd: { [weak self] span, endTimeNanosecondsSinceEpoch in
                     self?.process(span, endedAt: endTimeNanosecondsSinceEpoch)
