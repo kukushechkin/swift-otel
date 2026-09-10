@@ -118,6 +118,8 @@ extension OTelTracer: Service {
     }
 }
 
+private let noOpSpan = OTelSpan.noOp(NoOpTracer.NoOpSpan(context: .topLevel))
+
 extension OTelTracer: Tracer {
     func startSpan(
         _ operationName: String,
@@ -128,6 +130,11 @@ extension OTelTracer: Tracer {
         file fileID: String,
         line: UInt
     ) -> OTelSpan {
+        // Fast-path for constant sampler.
+        // This breaks the OTel spec, which says a dropped span should still get a fresh, propagatable
+        // context, but we value the performance of this common always-on/always-off case more.
+        if case .constant(let sampler) = sampler, sampler.decision == .drop { return noOpSpan }
+
         let parentContext = context()
 
         let traceID: TraceID
@@ -140,31 +147,19 @@ extension OTelTracer: Tracer {
             traceState = TraceState()
         }
 
-        // A constant sampler's decision doesn't depend on any of the arguments, so its algorithm never needs
-        // to run at all; only a pluggable sampler's `samplingResult` is actually worth calling.
-        let decision: OTelSamplingResult.Decision
-        let attributes: SpanAttributes
-        if case .constant(let constantSampler) = sampler {
-            decision = constantSampler.decision
-            attributes = [:]
-        } else {
-            let samplingResult = sampler.samplingResult(
-                operationName: operationName,
-                kind: kind,
-                traceID: traceID,
-                attributes: [:],
-                links: [],
-                parentContext: parentContext
-            )
-            decision = samplingResult.decision
-            attributes = samplingResult.attributes
-        }
+        let samplingResult = sampler.samplingResult(
+            operationName: operationName,
+            kind: kind,
+            traceID: traceID,
+            attributes: [:],
+            links: [],
+            parentContext: parentContext
+        )
 
-        // A span ID is generated independently of the sampling decision, even for a dropped/non-recording span:
-        // other components (such as log correlation) rely on a unique span ID regardless of whether it's recorded.
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sdk-span-creation
         let spanID = idGenerator.nextSpanID()
-        let traceFlags: TraceFlags = decision == .recordAndSample ? .sampled : []
+        var childContext = parentContext
+
+        let traceFlags: TraceFlags = samplingResult.decision == .recordAndSample ? .sampled : []
         let spanContext = OTelSpanContext.local(
             traceID: traceID,
             spanID: spanID,
@@ -172,10 +167,9 @@ extension OTelTracer: Tracer {
             traceFlags: traceFlags,
             traceState: traceState
         )
-        var childContext = parentContext
         childContext.spanContext = spanContext
 
-        switch decision {
+        switch samplingResult.decision {
         case .drop:
             return OTelSpan.noOp(NoOpTracer.NoOpSpan(context: childContext))
 
@@ -185,7 +179,7 @@ extension OTelTracer: Tracer {
                 kind: kind,
                 context: childContext,
                 spanContext: spanContext,
-                attributes: attributes,
+                attributes: samplingResult.attributes,
                 startTimeNanosecondsSinceEpoch: instant().nanosecondsSinceEpoch,
                 onEnd: { [weak self] span, endTimeNanosecondsSinceEpoch in
                     self?.process(span, endedAt: endTimeNanosecondsSinceEpoch)

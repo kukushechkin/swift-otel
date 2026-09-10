@@ -142,20 +142,7 @@ final class OTelTracerTests: XCTestCase {
         let span = tracer.startSpan("test")
         XCTAssertFalse(span.isRecording)
         XCTAssertEqual(span.operationName, "noop")
-
-        // Even though the span is dropped, it still gets a valid, propagatable SpanContext with a freshly
-        // generated span ID, per the spec's SDK Span creation requirements.
-        let spanContext = try XCTUnwrap(span.context.spanContext)
-        XCTAssertEqual(
-            spanContext,
-            .local(
-                traceID: .oneToSixteen,
-                spanID: .oneToEight,
-                parentSpanID: nil,
-                traceFlags: [],
-                traceState: TraceState()
-            )
-        )
+        XCTAssertNil(span.context.spanContext)
     }
 
     func test_startSpan_whenDynamicSamplerDrops_propagatesSpanContext() throws {
@@ -332,7 +319,7 @@ final class OTelTracerTests: XCTestCase {
         )
 
         let span = tracer.startSpan("test")
-        XCTAssertIdentical(span, tracer.activeSpan(identifiedBy: span.context))
+        XCTAssertEqual(tracer.activeSpan(identifiedBy: span.context)?.context.spanContext, span.context.spanContext)
     }
 
     func test_spanIdentifiedByServiceContext_withSpanContext_identifyingEndedSpan_returnsNil() async {
@@ -453,6 +440,74 @@ final class OTelTracerTests: XCTestCase {
         var batches = exporter.batches.makeAsyncIterator()
         let batch = await batches.next()
         XCTAssertEqual(try XCTUnwrap(batch).map(\.operationName), ["test"])
+    }
+
+    func test_startSpan_whenSamplerIsConstantOff_doesNotCallAnything() async throws {
+        struct TestFailingConformer: OTelIDGenerator, OTelSampler, OTelPropagator, OTelSpanProcessor, OTelSpanExporter {
+            func nextTraceID() -> TraceID {
+                XCTFail()
+                return .allZeroes
+            }
+
+            func nextSpanID() -> SpanID {
+                XCTFail()
+                return .allZeroes
+            }
+
+            func samplingResult(operationName: String, kind: SpanKind, traceID: TraceID, attributes: Tracing.SpanAttributes, links: [SpanLink], parentContext: ServiceContext) -> OTelSamplingResult {
+                XCTFail()
+                return .init(decision: .drop)
+            }
+
+            func extractSpanContext<Carrier, Extract>(from carrier: Carrier, using extractor: Extract) throws -> OTelSpanContext? where Carrier == Extract.Carrier, Extract: Extractor {
+                XCTFail()
+                return nil
+            }
+
+            func inject<Carrier, Inject>(_ spanContext: OTelSpanContext, into carrier: inout Carrier, using injector: Inject) where Carrier == Inject.Carrier, Inject: Injector {
+                XCTFail()
+            }
+
+            func onEnd(_ span: OTelFinishedSpan) { XCTFail() }
+
+            func forceFlush() async throws { XCTFail() }
+
+            func export(_ batch: some Collection<OTelFinishedSpan> & Sendable) async throws { XCTFail() }
+
+            func shutdown() async { XCTFail() }
+
+            func run() async throws { XCTFail() }
+
+            var context: ServiceContext {
+                XCTFail()
+                return .topLevel
+            }
+
+            var instant: StubInstant {
+                XCTFail()
+                return .constant(42)
+            }
+        }
+        let testFailingConformer = TestFailingConformer()
+        let tracer = OTelTracer(
+            idGenerator: testFailingConformer,
+            sampler: .constant(OTelConstantSampler(isOn: false)),
+            propagator: testFailingConformer,
+            processor: testFailingConformer,
+            resource: OTelResource()
+        )
+
+        let span = tracer.startSpan(
+            "thing",
+            context: testFailingConformer.context,
+            ofKind: .internal,
+            at: testFailingConformer.instant,
+            function: #function,
+            file: #file,
+            line: #line
+        )
+        XCTAssertFalse(span.isRecording)
+        XCTAssertNil(span.context.spanContext)
     }
 }
 
